@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -36,7 +36,7 @@ export function Header({ user, notifications, isSidebarCollapsed }: HeaderProps)
       <div className="flex h-full items-center justify-between px-6">
         <div>
           <div className="flex items-center gap-2 text-xs text-[#64748b]">
-            <span>Dashboard</span>
+            <span>Panel</span>
             <span>/</span>
             <span className="text-[#9fb0ca]">Vista General</span>
           </div>

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { MessageType, MessageStatus } from '@prisma/client'
 import crypto from 'crypto'
 
@@ -35,11 +35,11 @@ export async function GET(req: NextRequest) {
   const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN
 
   if (mode === 'subscribe' && token === verifyToken) {
-    console.log('Webhook verified')
+    console.log('Webhook verificado')
     return new NextResponse(challenge)
   }
 
-  return new NextResponse('Verification failed', { status: 403 })
+  return new NextResponse('Verificación fallida', { status: 403 })
 }
 
 // POST handler for incoming messages
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     if (process.env.NODE_ENV === 'production') {
       const secret = process.env.WHATSAPP_WEBHOOK_SECRET || ''
       if (!verifySignature(body, signature, secret)) {
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+        return NextResponse.json({ error: 'Firma inválida' }, { status: 401 })
       }
     }
 
@@ -81,8 +81,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Webhook error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error de webhook:', error)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
 
@@ -204,7 +204,7 @@ function extractMessageContent(message: any): { content: string; mediaUrl: strin
       }
     case 'audio':
       return {
-        content: '(Áudio)',
+        content: '(Audio)',
         mediaUrl: message.audio?.link || null,
         mediaType: 'audio',
       }
@@ -216,7 +216,7 @@ function extractMessageContent(message: any): { content: string; mediaUrl: strin
       }
     default:
       return {
-        content: '(Mensagem não suportada)',
+        content: '(Mensaje no compatible)',
         mediaUrl: null,
         mediaType: null,
       }
@@ -286,8 +286,8 @@ async function executeAutomation(automation: any, conversation: any, contact: an
       automationId: automation.id,
       contactId: contact.id,
       conversationId: conversation.id,
-      input: { message: 'Triggered' },
-      output: { action: 'Executed' },
+      input: { message: 'Activado' },
+      output: { action: 'Ejecutado' },
       success: true,
       executedAt: new Date(),
     },

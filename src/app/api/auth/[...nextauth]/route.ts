@@ -18,8 +18,8 @@ async function createAuthHandler() {
       CredentialsProvider({
         name: 'credentials',
         credentials: {
-          email: { label: 'Email', type: 'email' },
-          password: { label: 'Password', type: 'password' },
+          email: { label: 'Correo electrónico', type: 'email' },
+          password: { label: 'Contraseña', type: 'password' },
         },
         async authorize(credentials) {
           if (!credentials?.email || !credentials?.password) {

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { MainLayout } from '@/components/layout/MainLayout'
@@ -25,9 +25,9 @@ const mockContacts = [
     name: 'Ana Paula Mendes',
     avatar: null,
     phone: '5511999999999',
-    email: 'ana@empresa.com',
+    email: 'ana@nexo.com',
     company: 'TechCorp',
-    source: 'Website',
+    source: 'Sitio web',
     tags: [{ name: 'VIP', color: '#f59e0b' }, { name: 'Cliente', color: '#10b981' }],
     lastContact: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
   },
@@ -38,8 +38,8 @@ const mockContacts = [
     phone: '5511888888888',
     email: 'bruno@startup.com',
     company: 'StartupXYZ',
-    source: 'Indicação',
-    tags: [{ name: 'Novo', color: '#3b82f6' }],
+    source: 'Indicación',
+    tags: [{ name: 'Nuevo', color: '#3b82f6' }],
     lastContact: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
   },
   {
@@ -106,7 +106,7 @@ export default function ContactsPage() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, telefone ou email..."
+              placeholder="Buscar por nombre, teléfono o email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -127,7 +127,7 @@ export default function ContactsPage() {
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Teléfono</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Empresa</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Origen</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Tags</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Etiquetas</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Último Contacto</th>
                 <th className="text-right p-4 text-sm font-medium text-muted-foreground">Acciones</th>
               </tr>

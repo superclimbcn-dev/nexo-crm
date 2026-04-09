@@ -115,7 +115,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                   <ArrowUpDown className="h-3.5 w-3.5" />
                 </button>
               </TableHead>
-              <TableHead className="px-4 text-[#9fb0ca]">Status</TableHead>
+              <TableHead className="px-4 text-[#9fb0ca]">Estado</TableHead>
               <TableHead className="px-4 text-[#9fb0ca]">Origen</TableHead>
               <TableHead className="px-4 text-[#9fb0ca]">
                 <button onClick={() => handleSort('value')} className="flex items-center gap-1 hover:text-white">

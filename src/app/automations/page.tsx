@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { MainLayout } from '@/components/layout/MainLayout'
@@ -32,9 +32,9 @@ interface Automation {
 const mockAutomations: Automation[] = [
   {
     id: '1',
-    name: 'Resposta Automática - Preço',
+    name: 'Respuesta Automática - Precio',
     triggerType: 'KEYWORD',
-    triggerConfig: { keywords: ['preço', 'valor', 'custo', 'quanto'] },
+    triggerConfig: { keywords: ['precio', 'valor', 'costo', 'cuánto'] },
     isActive: true,
     executionCount: 145,
     lastExecutedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
@@ -59,7 +59,7 @@ const mockAutomations: Automation[] = [
   },
   {
     id: '4',
-    name: 'Lembrete Mensal',
+    name: 'Recordatorio Mensual',
     triggerType: 'SCHEDULE',
     triggerConfig: { cron: '0 9 1 * *' },
     isActive: false,
@@ -69,10 +69,10 @@ const mockAutomations: Automation[] = [
 ]
 
 const triggerConfig = {
-  KEYWORD: { label: 'Palavra-chave', icon: MessageSquare, color: 'bg-blue-500' },
+  KEYWORD: { label: 'Palabra clave', icon: MessageSquare, color: 'bg-blue-500' },
   NEW_CONVERSATION: { label: 'Nuevo Contacto', icon: Zap, color: 'bg-green-500' },
   INACTIVITY: { label: 'Inactividad', icon: Clock, color: 'bg-orange-500' },
-  SCHEDULE: { label: 'Agendado', icon: TrendingUp, color: 'bg-purple-500' },
+  SCHEDULE: { label: 'Programado', icon: TrendingUp, color: 'bg-purple-500' },
 }
 
 export default function AutomationsPage() {
@@ -93,7 +93,7 @@ export default function AutomationsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Automatizaciones</h1>
-            <p className="text-muted-foreground">Configure respostas automáticas e fluxos de chatbot</p>
+            <p className="text-muted-foreground">Configura respuestas automáticas y flujos de chatbot</p>
           </div>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
@@ -128,7 +128,7 @@ export default function AutomationsPage() {
         {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Buscar automações..." className="pl-10" />
+          <Input placeholder="Buscar automatizaciones..." className="pl-10" />
         </div>
 
         {/* Automations List */}
@@ -152,7 +152,7 @@ export default function AutomationsPage() {
                       </Badge>
                       {automation.isActive ? (
                         <Badge variant="outline" className="text-emerald-500">
-                          Ativa
+                          Activa
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="text-gray-500">
@@ -164,12 +164,12 @@ export default function AutomationsPage() {
                     <div className="flex items-center gap-6 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Bot className="w-4 h-4" />
-                        {automation.executionCount.toLocaleString()} execuções
+                        {automation.executionCount.toLocaleString()} ejecuciones
                       </div>
                       {automation.lastExecutedAt && (
                         <div>
-                          Última execução:{' '}
-                          {new Date(automation.lastExecutedAt).toLocaleString('pt-BR')}
+                          Última ejecución:{' '}
+                          {new Date(automation.lastExecutedAt).toLocaleString('es-ES')}
                         </div>
                       )}
                     </div>
@@ -191,7 +191,7 @@ export default function AutomationsPage() {
                       {automation.triggerType === 'INACTIVITY' && (
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
-                            Disparar após {automation.triggerConfig.delay} minutos de inatividade
+                            Disparar después de {automation.triggerConfig.delay} minutos de inactividad
                           </span>
                         </div>
                       )}

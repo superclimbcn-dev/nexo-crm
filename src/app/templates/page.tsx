@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { MainLayout } from '@/components/layout/MainLayout'
@@ -33,66 +33,66 @@ interface Template {
 const mockTemplates: Template[] = [
   {
     id: '1',
-    name: 'Boas-vindas',
-    whatsappName: 'boas_vindas',
+    name: 'Bienvenida',
+    whatsappName: 'bienvenida',
     category: 'UTILITY',
     headerType: 'NONE',
-    bodyText: 'Olá {{1}}! Bem-vindo à Nexo Digital. Como podemos ajudar você hoje?',
+    bodyText: 'Hola {{1}}. Bienvenido a Nexo Digital. ¿Cómo podemos ayudarte hoy?',
     status: 'APPROVED',
-    language: 'pt_BR',
+    language: 'es',
   },
   {
     id: '2',
-    name: 'Promoção Black Friday',
-    whatsappName: 'promocao_black_friday',
+    name: 'Promoción Black Friday',
+    whatsappName: 'promocion_black_friday',
     category: 'MARKETING',
     headerType: 'IMAGE',
-    bodyText: '🎉 Black Friday! Aproveite {{1}}% de desconto em todos os planos. Válido até {{2}}. Não perca!',
+    bodyText: 'Black Friday. Aprovecha {{1}}% de descuento en todos los planes. Válido hasta {{2}}. No te lo pierdas.',
     status: 'APPROVED',
-    language: 'pt_BR',
+    language: 'es',
   },
   {
     id: '3',
-    name: 'Follow-up Pós-venda',
-    whatsappName: 'follow_up_pos_venda',
+    name: 'Seguimiento Postventa',
+    whatsappName: 'seguimiento_postventa',
     category: 'UTILITY',
     headerType: 'NONE',
-    bodyText: 'Olá {{1}}! Tudo bem com o {{2}}? Precisa de algum suporte? Estamos aqui para ajudar!',
+    bodyText: 'Hola {{1}}. ¿Todo bien con {{2}}? ¿Necesitas soporte? Estamos aquí para ayudarte.',
     status: 'APPROVED',
-    language: 'pt_BR',
+    language: 'es',
   },
   {
     id: '4',
-    name: 'Lembrete de Pagamento',
-    whatsappName: 'lembrete_pagamento',
+    name: 'Recordatorio de Pago',
+    whatsappName: 'recordatorio_pago',
     category: 'UTILITY',
     headerType: 'NONE',
-    bodyText: 'Olá {{1}}! Seu boleto no valor de R$ {{2}} vence amanhã. Acesse: {{3}}',
+    bodyText: 'Hola {{1}}. Tu factura por R$ {{2}} vence mañana. Accede aquí: {{3}}',
     status: 'PENDING',
-    language: 'pt_BR',
+    language: 'es',
   },
   {
     id: '5',
-    name: 'Nova Funcionalidade',
-    whatsappName: 'nova_funcionalidade',
+    name: 'Nueva Funcionalidad',
+    whatsappName: 'nueva_funcionalidad',
     category: 'MARKETING',
     headerType: 'IMAGE',
-    bodyText: '🚀 Novidade! Lançamos {{1}}. Confira agora e aproveite!',
+    bodyText: 'Novedad. Lanzamos {{1}}. Revísalo ahora y aprovéchalo.',
     status: 'REJECTED',
-    language: 'pt_BR',
+    language: 'es',
   },
 ]
 
 const categoryConfig = {
   MARKETING: { label: 'Marketing', color: 'bg-purple-500' },
-  UTILITY: { label: 'Utilidade', color: 'bg-blue-500' },
-  AUTHENTICATION: { label: 'Autenticação', color: 'bg-green-500' },
+  UTILITY: { label: 'Utilidad', color: 'bg-blue-500' },
+  AUTHENTICATION: { label: 'Autenticación', color: 'bg-green-500' },
 }
 
 const statusConfig = {
-  APPROVED: { label: 'Aprovado', color: 'text-emerald-500', icon: CheckCircle },
-  PENDING: { label: 'Pendente', color: 'text-yellow-500', icon: Clock },
-  REJECTED: { label: 'Rejeitado', color: 'text-red-500', icon: XCircle },
+  APPROVED: { label: 'Aprobado', color: 'text-emerald-500', icon: CheckCircle },
+  PENDING: { label: 'Pendiente', color: 'text-yellow-500', icon: Clock },
+  REJECTED: { label: 'Rechazado', color: 'text-red-500', icon: XCircle },
 }
 
 export default function TemplatesPage() {
@@ -111,35 +111,35 @@ export default function TemplatesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Templates</h1>
+            <h1 className="text-2xl font-bold">Plantillas</h1>
             <p className="text-muted-foreground">Gestiona tus plantillas aprobadas por WhatsApp</p>
           </div>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            Novo Template
+            Nueva Plantilla
           </Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Total de Templates</p>
+            <p className="text-sm text-muted-foreground">Total de Plantillas</p>
             <p className="text-2xl font-bold">{templates.length}</p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Aprovados</p>
+            <p className="text-sm text-muted-foreground">Aprobados</p>
             <p className="text-2xl font-bold text-emerald-500">
               {templates.filter((t) => t.status === 'APPROVED').length}
             </p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Pendentes</p>
+            <p className="text-sm text-muted-foreground">Pendientes</p>
             <p className="text-2xl font-bold text-yellow-500">
               {templates.filter((t) => t.status === 'PENDING').length}
             </p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Rejeitados</p>
+            <p className="text-sm text-muted-foreground">Rechazados</p>
             <p className="text-2xl font-bold text-red-500">
               {templates.filter((t) => t.status === 'REJECTED').length}
             </p>
@@ -150,7 +150,7 @@ export default function TemplatesPage() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar templates..."
+            placeholder="Buscar plantillas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"

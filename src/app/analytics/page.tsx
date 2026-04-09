@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Badge } from '@/components/ui/badge'
@@ -28,29 +28,29 @@ import {
 } from 'lucide-react'
 
 const messageData = [
-  { name: 'Seg', enviadas: 120, recebidas: 85 },
-  { name: 'Ter', enviadas: 150, recebidas: 110 },
-  { name: 'Qua', enviadas: 180, recebidas: 140 },
-  { name: 'Qui', enviadas: 140, recebidas: 95 },
-  { name: 'Sex', enviadas: 200, recebidas: 160 },
-  { name: 'Sáb', enviadas: 80, recebidas: 60 },
-  { name: 'Dom', enviadas: 60, recebidas: 45 },
+  { name: 'Lun', enviadas: 120, recibidas: 85 },
+  { name: 'Mar', enviadas: 150, recibidas: 110 },
+  { name: 'Mié', enviadas: 180, recibidas: 140 },
+  { name: 'Jue', enviadas: 140, recibidas: 95 },
+  { name: 'Vie', enviadas: 200, recibidas: 160 },
+  { name: 'Sáb', enviadas: 80, recibidas: 60 },
+  { name: 'Dom', enviadas: 60, recibidas: 45 },
 ]
 
 const sourceData = [
-  { name: 'Website', value: 35, color: '#6366f1' },
-  { name: 'Indicação', value: 25, color: '#8b5cf6' },
+  { name: 'Sitio web', value: 35, color: '#6366f1' },
+  { name: 'Indicación', value: 25, color: '#8b5cf6' },
   { name: 'LinkedIn', value: 20, color: '#3b82f6' },
   { name: 'Google Ads', value: 12, color: '#06b6d4' },
-  { name: 'Outros', value: 8, color: '#64748b' },
+  { name: 'Otros', value: 8, color: '#64748b' },
 ]
 
 const pipelineData = [
   { name: 'Jan', value: 45000 },
-  { name: 'Fev', value: 52000 },
+  { name: 'Feb', value: 52000 },
   { name: 'Mar', value: 48000 },
   { name: 'Abr', value: 61000 },
-  { name: 'Mai', value: 75000 },
+  { name: 'May', value: 75000 },
   { name: 'Jun', value: 82000 },
 ]
 
@@ -67,8 +67,8 @@ export default function AnalyticsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">Métricas e relatórios do seu atendimento</p>
+          <h1 className="text-2xl font-bold">Análisis</h1>
+          <p className="text-muted-foreground">Métricas e informes de tu atención</p>
         </div>
 
         {/* KPI Cards */}
@@ -76,14 +76,14 @@ export default function AnalyticsPage() {
           <div className="bg-card p-4 rounded-lg border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Conversas Hoje</p>
+                <p className="text-sm text-muted-foreground">Conversaciones Hoy</p>
                 <p className="text-2xl font-bold">47</p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-primary" />
               </div>
             </div>
-            <p className="text-xs text-emerald-500 mt-2">+12% vs ontem</p>
+            <p className="text-xs text-emerald-500 mt-2">+12% vs ayer</p>
           </div>
 
           <div className="bg-card p-4 rounded-lg border border-border">
@@ -96,33 +96,33 @@ export default function AnalyticsPage() {
                 <Users className="w-5 h-5 text-blue-500" />
               </div>
             </div>
-            <p className="text-xs text-emerald-500 mt-2">+5% vs semana passada</p>
+            <p className="text-xs text-emerald-500 mt-2">+5% vs semana pasada</p>
           </div>
 
           <div className="bg-card p-4 rounded-lg border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Taxa de Resposta</p>
+                <p className="text-sm text-muted-foreground">Tasa de Respuesta</p>
                 <p className="text-2xl font-bold">94.2%</p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                 <CheckCircle className="w-5 h-5 text-emerald-500" />
               </div>
             </div>
-            <p className="text-xs text-emerald-500 mt-2">+2.1% vs mês passado</p>
+            <p className="text-xs text-emerald-500 mt-2">+2.1% vs mes pasado</p>
           </div>
 
           <div className="bg-card p-4 rounded-lg border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Tempo Médio</p>
+                <p className="text-sm text-muted-foreground">Tiempo Medio</p>
                 <p className="text-2xl font-bold">3.2m</p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
                 <Clock className="w-5 h-5 text-orange-500" />
               </div>
             </div>
-            <p className="text-xs text-emerald-500 mt-2">-0.5m vs mês passado</p>
+            <p className="text-xs text-emerald-500 mt-2">-0.5m vs mes pasado</p>
           </div>
         </div>
 
@@ -130,7 +130,7 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-2 gap-6">
           {/* Messages Chart */}
           <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-lg font-semibold mb-4">Volume de Mensagens</h3>
+            <h3 className="text-lg font-semibold mb-4">Volumen de Mensajes</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={messageData}>
@@ -145,7 +145,7 @@ export default function AnalyticsPage() {
                     }}
                   />
                   <Bar dataKey="enviadas" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="recebidas" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="recibidas" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -196,7 +196,7 @@ export default function AnalyticsPage() {
 
           {/* Pipeline Value Chart */}
           <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-lg font-semibold mb-4">Evolução do Pipeline</h3>
+            <h3 className="text-lg font-semibold mb-4">Evolución del Pipeline</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={pipelineData}>
@@ -228,9 +228,9 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Agent Performance */}
+          {/* Rendimiento por Agente */}
           <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-lg font-semibold mb-4">Performance por Agente</h3>
+            <h3 className="text-lg font-semibold mb-4">Rendimiento por agente</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={agentPerformance} layout="vertical">
@@ -254,16 +254,16 @@ export default function AnalyticsPage() {
         {/* Agent Details Table */}
         <div className="bg-card rounded-lg border border-border overflow-hidden">
           <div className="p-4 border-b border-border">
-            <h3 className="text-lg font-semibold">Detalhes por Agente</h3>
+            <h3 className="text-lg font-semibold">Detalles por Agente</h3>
           </div>
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Agente</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Respostas</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Tempo Médio</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Satisfação</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Respuestas</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Tiempo Medio</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Satisfacción</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Estado</th>
               </tr>
             </thead>
             <tbody>
@@ -280,7 +280,7 @@ export default function AnalyticsPage() {
                   </td>
                   <td className="p-4">
                     <Badge variant="outline" className="text-emerald-500">
-                      Online
+                      En línea
                     </Badge>
                   </td>
                 </tr>

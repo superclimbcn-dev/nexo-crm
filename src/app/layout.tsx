@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
@@ -6,8 +6,8 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Nexo Inbox - CRM WhatsApp',
-  description: 'Sistema completo de CRM com WhatsApp Business API',
+  title: 'Nexo CRM WhatsApp',
+  description: 'Sistema completo de CRM con WhatsApp Business API',
 }
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="es">
       <body className={inter.className}>
         <Providers>{children}</Providers>
       </body>

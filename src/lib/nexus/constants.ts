@@ -18,7 +18,7 @@ export const NEXUS_ANIMATION = {
 }
 
 export const NEXUS_NAV_ITEMS: NexusNavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard', href: '/dashboard' },
+  { id: 'dashboard', label: 'Panel', icon: 'LayoutDashboard', href: '/dashboard' },
   { id: 'leads', label: 'Leads', icon: 'Users', href: '/contacts', badge: 12 },
   { id: 'oportunidades', label: 'Oportunidades', icon: 'Target', href: '/crm' },
   { id: 'pipeline', label: 'Pipeline', icon: 'GitBranch', href: '/crm' },
@@ -28,7 +28,7 @@ export const NEXUS_NAV_ITEMS: NexusNavItem[] = [
 ]
 
 export const NEXUS_STATUS_CONFIG = {
-  novo: { label: 'Novo', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+  novo: { label: 'Nuevo', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
   em_negociacao: {
     label: 'En negociación',
     color: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -38,10 +38,10 @@ export const NEXUS_STATUS_CONFIG = {
 } as const
 
 export const NEXUS_SOURCE_ICONS: Record<string, string> = {
-  Website: 'Globe',
+  'Sitio web': 'Globe',
   Indicación: 'UserPlus',
   LinkedIn: 'Linkedin',
-  Email: 'Mail',
+  Correo: 'Mail',
   Facebook: 'Facebook',
   Instagram: 'Instagram',
   'Google Ads': 'Search',

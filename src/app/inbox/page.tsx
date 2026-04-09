@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef } from 'react'
 import { MainLayout } from '@/components/layout/MainLayout'
@@ -68,7 +68,7 @@ const mockConversations = [
       avatar: null,
     },
     lastMessage: {
-      content: '¿Podemos agendar una llamada para mañana?',
+      content: '¿Podemos programar una llamada para mañana?',
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       status: 'READ',
     },
@@ -109,7 +109,7 @@ const mockMessages = [
     id: 'm2',
     direction: 'OUTBOUND',
     type: 'TEXT',
-    content: 'Olá! Claro, ficarei feliz em ajudar. Temos três planos: Starter (R$ 99/mês), Pro (R$ 299/mês) e Enterprise (sob consulta). Qual atende melhor suas necessidades?',
+    content: 'Hola. Claro, con gusto te ayudo. Tenemos tres planes: Starter (R$ 99/mes), Pro (R$ 299/mes) y Enterprise (bajo consulta). ¿Cuál se adapta mejor a tus necesidades?',
     createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
     status: 'READ',
     aiGenerated: true,
@@ -161,7 +161,7 @@ export default function InboxPage() {
         id: `m${Date.now() + 1}`,
         direction: 'OUTBOUND',
         type: 'TEXT',
-        content: 'O plano Enterprise é personalizado de acordo com suas necessidades. Geralmente começa em R$ 999/mês e inclui suporte prioritário, SLA garantido e recursos avançados. Posso agendar uma call com nosso time comercial para discutir os detalhes?',
+        content: 'El plan Enterprise se personaliza según tus necesidades. Generalmente comienza en R$ 999/mes e incluye soporte prioritario, SLA garantizado y recursos avanzados. ¿Puedo programar una llamada con nuestro equipo comercial para revisar los detalles?',
         createdAt: new Date().toISOString(),
         status: 'SENT',
         aiGenerated: true,
@@ -359,23 +359,23 @@ export default function InboxPage() {
               <div>
                 <label className="text-xs text-muted-foreground uppercase">Estado en el Pipeline</label>
                 <select className="w-full mt-1 p-2 rounded-md bg-background border border-border text-sm">
-                  <option>Novo</option>
-                  <option>Qualificado</option>
-                  <option>Proposta</option>
-                  <option>Negociação</option>
+                  <option>Nuevo</option>
+                  <option>Calificado</option>
+                  <option>Propuesta</option>
+                  <option>Negociación</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs text-muted-foreground uppercase">Valor Estimado</label>
+                <label className="text-xs text-muted-foreground uppercase">Valor estimado</label>
                 <Input placeholder="R$ 0,00" className="mt-1" />
               </div>
 
               <div>
-                <label className="text-xs text-muted-foreground uppercase">Notas Internas</label>
+                <label className="text-xs text-muted-foreground uppercase">Notas internas</label>
                 <textarea
                   className="w-full mt-1 p-2 rounded-md bg-background border border-border text-sm min-h-[100px]"
-                  placeholder="Adicione notas sobre este contato..."
+                  placeholder="Añade notas sobre este contacto..."
                 />
               </div>
 
@@ -384,11 +384,11 @@ export default function InboxPage() {
                 <div className="space-y-2">
                   <Button variant="outline" className="w-full justify-start">
                     <Clock className="w-4 h-4 mr-2" />
-                    Agendar Follow-up
+                    Programar seguimiento
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
                     <FileText className="w-4 h-4 mr-2" />
-                    Enviar Presupuesto
+                    Enviar propuesta
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
                     <User className="w-4 h-4 mr-2" />

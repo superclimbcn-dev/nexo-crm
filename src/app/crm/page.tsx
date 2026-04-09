@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { MainLayout } from '@/components/layout/MainLayout'
@@ -31,18 +31,18 @@ interface Deal {
 }
 
 const stages = [
-  { id: 'new', name: 'Novo', color: '#3b82f6' },
-  { id: 'qualified', name: 'Qualificado', color: '#8b5cf6' },
-  { id: 'proposal', name: 'Proposta', color: '#f59e0b' },
-  { id: 'negotiation', name: 'Negociação', color: '#f97316' },
-  { id: 'closed_won', name: 'Ganho', color: '#10b981' },
+  { id: 'new', name: 'Nuevo', color: '#3b82f6' },
+  { id: 'qualified', name: 'Calificado', color: '#8b5cf6' },
+  { id: 'proposal', name: 'Propuesta', color: '#f59e0b' },
+  { id: 'negotiation', name: 'Negociación', color: '#f97316' },
+  { id: 'closed_won', name: 'Ganado', color: '#10b981' },
   { id: 'closed_lost', name: 'Perdido', color: '#ef4444' },
 ]
 
 const mockDeals: Deal[] = [
   {
     id: '1',
-    title: 'TechCorp - Plano Enterprise',
+    title: 'TechCorp - Plan Enterprise',
     contact: { name: 'Ana Paula' },
     value: 45000,
     stage: 'negotiation',
@@ -51,7 +51,7 @@ const mockDeals: Deal[] = [
   },
   {
     id: '2',
-    title: 'StartupXYZ - Plano Pro',
+    title: 'StartupXYZ - Plan Pro',
     contact: { name: 'Bruno Costa' },
     value: 12000,
     stage: 'proposal',
@@ -60,7 +60,7 @@ const mockDeals: Deal[] = [
   },
   {
     id: '3',
-    title: 'Global Inc - Plano Enterprise',
+    title: 'Global Inc - Plan Enterprise',
     contact: { name: 'Carla Souza' },
     value: 85000,
     stage: 'qualified',
@@ -69,7 +69,7 @@ const mockDeals: Deal[] = [
   },
   {
     id: '4',
-    title: 'Fast Solutions - Plano Starter',
+    title: 'Fast Solutions - Plan Starter',
     contact: { name: 'Daniel Lima' },
     value: 5000,
     stage: 'new',
@@ -78,7 +78,7 @@ const mockDeals: Deal[] = [
   },
   {
     id: '5',
-    title: 'MegaCorp - Plano Enterprise',
+    title: 'MegaCorp - Plan Enterprise',
     contact: { name: 'Elisa Rocha' },
     value: 150000,
     stage: 'closed_won',
@@ -131,7 +131,7 @@ export default function CRMPage() {
           <div className="flex gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Buscar deals..." className="pl-10 w-64" />
+              <Input placeholder="Buscar oportunidades..." className="pl-10 w-64" />
             </div>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
@@ -147,13 +147,13 @@ export default function CRMPage() {
         {/* Pipeline Stats */}
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Total em Pipeline</p>
+            <p className="text-sm text-muted-foreground">Total en Pipeline</p>
             <p className="text-2xl font-bold">
               {formatCurrency(deals.reduce((sum, d) => sum + d.value, 0))}
             </p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Deals Ativos</p>
+            <p className="text-sm text-muted-foreground">Oportunidades Activas</p>
             <p className="text-2xl font-bold">{deals.filter((d) => d.stage !== 'closed_won' && d.stage !== 'closed_lost').length}</p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
@@ -161,7 +161,7 @@ export default function CRMPage() {
             <p className="text-2xl font-bold">24.8%</p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Ganho este mês</p>
+            <p className="text-sm text-muted-foreground">Ganado este mes</p>
             <p className="text-2xl font-bold text-emerald-500">
               {formatCurrency(deals.filter((d) => d.stage === 'closed_won').reduce((sum, d) => sum + d.value, 0))}
             </p>
@@ -229,7 +229,7 @@ export default function CRMPage() {
 
                     <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                       <Calendar className="w-3 h-3" />
-                      <span>Fecha em {new Date(deal.expectedClose).toLocaleDateString('pt-BR')}</span>
+                      <span>Cierra el {new Date(deal.expectedClose).toLocaleDateString('es-ES')}</span>
                     </div>
                   </div>
                 ))}

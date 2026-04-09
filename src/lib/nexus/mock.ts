@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   NexusActivity,
   NexusChartData,
   NexusLead,
@@ -11,9 +11,9 @@ import type {
 export const currentUser: NexusUser = {
   id: '1',
   name: 'Carlos Silva',
-  email: 'carlos@empresa.com',
+    email: 'carlos@nexo.com',
   avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-  role: 'Gerente de Vendas',
+  role: 'Gerente de Ventas',
 }
 
 export const statsData: NexusStatCard[] = [
@@ -62,7 +62,7 @@ export const leadsData: NexusLead[] = [
     email: 'ana@techcorp.com',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
     status: 'em_negociacao',
-    source: 'Website',
+    source: 'Sitio web',
     value: 45000,
     lastContact: 'hace 2 horas',
     company: 'TechCorp',
@@ -106,7 +106,7 @@ export const leadsData: NexusLead[] = [
     email: 'elisa@enterprise.com',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
     status: 'em_negociacao',
-    source: 'Email',
+    source: 'Correo',
     value: 85000,
     lastContact: 'hace 3 días',
     company: 'Enterprise X',
@@ -116,11 +116,11 @@ export const leadsData: NexusLead[] = [
 export const pipelineData: NexusPipelineColumn[] = [
   {
     id: 'novo',
-    title: 'Novo',
+    title: 'Nuevo',
     color: '#3b82f6',
     leads: [
       { ...leadsData[1], id: 'l1' },
-      { ...leadsData[0], id: 'l2', name: 'DataFlow', email: 'contato@dataflow.com', company: 'DataFlow', value: 18000 },
+      { ...leadsData[0], id: 'l2', name: 'DataFlow', email: 'contacto@dataflow.com', company: 'DataFlow', value: 18000 },
     ],
   },
   {
@@ -128,8 +128,8 @@ export const pipelineData: NexusPipelineColumn[] = [
     title: 'Calificado',
     color: '#8b5cf6',
     leads: [
-      { ...leadsData[0], id: 'l3', name: 'CloudSys', email: 'contato@cloudsys.com', company: 'CloudSys', value: 67000 },
-      { ...leadsData[1], id: 'l4', name: 'NetPrime', email: 'contato@netprime.com', company: 'NetPrime', value: 41000 },
+      { ...leadsData[0], id: 'l3', name: 'CloudSys', email: 'contacto@cloudsys.com', company: 'CloudSys', value: 67000 },
+      { ...leadsData[1], id: 'l4', name: 'NetPrime', email: 'contacto@netprime.com', company: 'NetPrime', value: 41000 },
     ],
   },
   {
@@ -137,8 +137,8 @@ export const pipelineData: NexusPipelineColumn[] = [
     title: 'Propuesta',
     color: '#f59e0b',
     leads: [
-      { ...leadsData[0], id: 'l5', name: 'MegaCorp', email: 'contato@megacorp.com', company: 'MegaCorp', value: 150000 },
-      { ...leadsData[1], id: 'l6', name: 'SmartBiz', email: 'contato@smartbiz.com', company: 'SmartBiz', value: 89000 },
+      { ...leadsData[0], id: 'l5', name: 'MegaCorp', email: 'contacto@megacorp.com', company: 'MegaCorp', value: 150000 },
+      { ...leadsData[1], id: 'l6', name: 'SmartBiz', email: 'contacto@smartbiz.com', company: 'SmartBiz', value: 89000 },
     ],
   },
   {
@@ -146,8 +146,8 @@ export const pipelineData: NexusPipelineColumn[] = [
     title: 'Negociación',
     color: '#f97316',
     leads: [
-      { ...leadsData[0], id: 'l7', name: 'GlobalTech', email: 'contato@globaltech.com', company: 'GlobalTech', value: 200000 },
-      { ...leadsData[1], id: 'l8', name: 'FastScale', email: 'contato@fastscale.com', company: 'FastScale', value: 95000 },
+      { ...leadsData[0], id: 'l7', name: 'GlobalTech', email: 'contacto@globaltech.com', company: 'GlobalTech', value: 200000 },
+      { ...leadsData[1], id: 'l8', name: 'FastScale', email: 'contacto@fastscale.com', company: 'FastScale', value: 95000 },
     ],
   },
   {
@@ -155,8 +155,8 @@ export const pipelineData: NexusPipelineColumn[] = [
     title: 'Cerrado',
     color: '#10b981',
     leads: [
-      { ...leadsData[2], id: 'l9', name: 'EnterpriseX', email: 'contato@enterprisex.com', company: 'EnterpriseX', value: 500000 },
-      { ...leadsData[2], id: 'l10', name: 'BigData Co', email: 'contato@bigdata.com', company: 'BigData Co', value: 320000 },
+      { ...leadsData[2], id: 'l9', name: 'EnterpriseX', email: 'contacto@enterprisex.com', company: 'EnterpriseX', value: 500000 },
+      { ...leadsData[2], id: 'l10', name: 'BigData Co', email: 'contacto@bigdata.com', company: 'BigData Co', value: 320000 },
     ],
   },
 ]
@@ -165,7 +165,7 @@ export const activitiesData: NexusActivity[] = [
   {
     id: '1',
     type: 'lead_created',
-    description: 'Novo lead: TechCorp',
+    description: 'Nuevo lead: TechCorp',
     timestamp: 'hace 2 minutos',
     user: currentUser,
   },
@@ -179,14 +179,14 @@ export const activitiesData: NexusActivity[] = [
   {
     id: '3',
     type: 'task_completed',
-    description: 'Tarea completada: Follow-up',
+    description: 'Tarea completada: seguimiento',
     timestamp: 'hace 1 hora',
     user: { ...currentUser, name: 'Bruno Costa' },
   },
   {
     id: '4',
     type: 'email_sent',
-    description: 'Email enviado: Propuesta',
+    description: 'Correo enviado: Propuesta',
     timestamp: 'hace 2 horas',
     user: { ...currentUser, name: 'Carla Souza' },
   },
@@ -196,7 +196,7 @@ export const notificationsData: NexusNotification[] = [
   {
     id: '1',
     title: 'Nuevo lead calificado',
-    message: 'TechCorp entrou em contato via website',
+    message: 'TechCorp se puso en contacto a través del sitio web',
     timestamp: 'hace 5 minutos',
     read: false,
   },
@@ -218,26 +218,26 @@ export const notificationsData: NexusNotification[] = [
 
 export const conversionChartData: NexusChartData[] = [
   { name: 'Jan', value: 18 },
-  { name: 'Fev', value: 21 },
+  { name: 'Feb', value: 21 },
   { name: 'Mar', value: 19 },
   { name: 'Abr', value: 24 },
-  { name: 'Mai', value: 26 },
+  { name: 'May', value: 26 },
   { name: 'Jun', value: 28 },
 ]
 
 export const sourceChartData: NexusChartData[] = [
-  { name: 'Website', value: 35, color: '#6366f1' },
+  { name: 'Sitio web', value: 35, color: '#6366f1' },
   { name: 'Indicación', value: 25, color: '#8b5cf6' },
   { name: 'LinkedIn', value: 20, color: '#3b82f6' },
-  { name: 'Email', value: 12, color: '#06b6d4' },
-  { name: 'Outros', value: 8, color: '#64748b' },
+  { name: 'Correo', value: 12, color: '#06b6d4' },
+  { name: 'Otros', value: 8, color: '#64748b' },
 ]
 
 export const pipelineValueData: NexusChartData[] = [
   { name: 'Jan', value: 850000 },
-  { name: 'Fev', value: 920000 },
+  { name: 'Feb', value: 920000 },
   { name: 'Mar', value: 980000 },
   { name: 'Abr', value: 1050000 },
-  { name: 'Mai', value: 1150000 },
+  { name: 'May', value: 1150000 },
   { name: 'Jun', value: 1200000 },
 ]

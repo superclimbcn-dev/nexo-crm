@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -26,13 +26,13 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Inbox', href: '/inbox', icon: Inbox, badge: 12 },
+  { label: 'Bandeja de entrada', href: '/inbox', icon: Inbox, badge: 12 },
   { label: 'Contactos', href: '/contacts', icon: Users },
   { label: 'CRM / Pipeline', href: '/crm', icon: BarChart3 },
   { label: 'Campañas', href: '/campaigns', icon: Megaphone },
   { label: 'Automatizaciones', href: '/automations', icon: Bot },
-  { label: 'Templates', href: '/templates', icon: FileText },
-  { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { label: 'Plantillas', href: '/templates', icon: FileText },
+  { label: 'Análisis', href: '/analytics', icon: BarChart3 },
 ]
 
 const bottomNavItems: NavItem[] = [
@@ -56,7 +56,7 @@ export function Sidebar() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <MessageSquare className="w-5 h-5 text-white" />
           </div>
-          {!collapsed && <span className="font-semibold text-lg text-white">Nexo Inbox</span>}
+          {!collapsed && <span className="font-semibold text-lg text-white">Nexo CRM</span>}
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
