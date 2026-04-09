@@ -112,7 +112,7 @@ export default function TemplatesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Templates</h1>
-            <p className="text-muted-foreground">Gerencie seus templates aprovados pelo WhatsApp</p>
+            <p className="text-muted-foreground">Gestiona tus plantillas aprobadas por WhatsApp</p>
           </div>
           <Button>
             <Plus className="w-4 h-4 mr-2" />

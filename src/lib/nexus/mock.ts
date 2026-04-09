@@ -27,7 +27,7 @@ export const statsData: NexusStatCard[] = [
     sparkline: [2100, 2300, 2250, 2400, 2600, 2847],
   },
   {
-    title: 'Taxa de Conversao',
+    title: 'Tasa de Conversión',
     value: '24.8%',
     trend: 3.2,
     trendLabel: 'vs mes anterior',
@@ -36,7 +36,7 @@ export const statsData: NexusStatCard[] = [
     sparkline: [18, 21, 19, 22, 23, 24.8],
   },
   {
-    title: 'Valor em Pipeline',
+    title: 'Valor en Pipeline',
     value: 'R$ 1.2M',
     trend: 8.7,
     trendLabel: 'vs mes anterior',
@@ -45,7 +45,7 @@ export const statsData: NexusStatCard[] = [
     sparkline: [850000, 920000, 980000, 1050000, 1150000, 1200000],
   },
   {
-    title: 'Tarefas Pendentes',
+    title: 'Tareas Pendientes',
     value: '18',
     trend: -5,
     trendLabel: 'vs semana anterior',
@@ -64,7 +64,7 @@ export const leadsData: NexusLead[] = [
     status: 'em_negociacao',
     source: 'Website',
     value: 45000,
-    lastContact: '2 horas atras',
+    lastContact: 'hace 2 horas',
     company: 'TechCorp',
   },
   {
@@ -73,9 +73,9 @@ export const leadsData: NexusLead[] = [
     email: 'bruno@innovate.com',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
     status: 'novo',
-    source: 'Indicacao',
+    source: 'Indicación',
     value: 28000,
-    lastContact: '4 horas atras',
+    lastContact: 'hace 4 horas',
     company: 'Innovate Labs',
   },
   {
@@ -86,7 +86,7 @@ export const leadsData: NexusLead[] = [
     status: 'convertido',
     source: 'LinkedIn',
     value: 120000,
-    lastContact: '1 dia atras',
+    lastContact: 'hace 1 día',
     company: 'Global Tech',
   },
   {
@@ -97,7 +97,7 @@ export const leadsData: NexusLead[] = [
     status: 'perdido',
     source: 'Facebook',
     value: 15000,
-    lastContact: '2 dias atras',
+    lastContact: 'hace 2 días',
     company: 'Fast Startup',
   },
   {
@@ -108,7 +108,7 @@ export const leadsData: NexusLead[] = [
     status: 'em_negociacao',
     source: 'Email',
     value: 85000,
-    lastContact: '3 dias atras',
+    lastContact: 'hace 3 días',
     company: 'Enterprise X',
   },
 ]
@@ -125,7 +125,7 @@ export const pipelineData: NexusPipelineColumn[] = [
   },
   {
     id: 'qualificado',
-    title: 'Qualificado',
+    title: 'Calificado',
     color: '#8b5cf6',
     leads: [
       { ...leadsData[0], id: 'l3', name: 'CloudSys', email: 'contato@cloudsys.com', company: 'CloudSys', value: 67000 },
@@ -134,7 +134,7 @@ export const pipelineData: NexusPipelineColumn[] = [
   },
   {
     id: 'proposta',
-    title: 'Proposta',
+    title: 'Propuesta',
     color: '#f59e0b',
     leads: [
       { ...leadsData[0], id: 'l5', name: 'MegaCorp', email: 'contato@megacorp.com', company: 'MegaCorp', value: 150000 },
@@ -143,7 +143,7 @@ export const pipelineData: NexusPipelineColumn[] = [
   },
   {
     id: 'negociacao',
-    title: 'Negociacao',
+    title: 'Negociación',
     color: '#f97316',
     leads: [
       { ...leadsData[0], id: 'l7', name: 'GlobalTech', email: 'contato@globaltech.com', company: 'GlobalTech', value: 200000 },
@@ -152,7 +152,7 @@ export const pipelineData: NexusPipelineColumn[] = [
   },
   {
     id: 'fechado',
-    title: 'Fechado',
+    title: 'Cerrado',
     color: '#10b981',
     leads: [
       { ...leadsData[2], id: 'l9', name: 'EnterpriseX', email: 'contato@enterprisex.com', company: 'EnterpriseX', value: 500000 },
@@ -166,28 +166,28 @@ export const activitiesData: NexusActivity[] = [
     id: '1',
     type: 'lead_created',
     description: 'Novo lead: TechCorp',
-    timestamp: '2 minutos atras',
+    timestamp: 'hace 2 minutos',
     user: currentUser,
   },
   {
     id: '2',
     type: 'deal_won',
-    description: 'Negocio fechado: R$ 45.000',
-    timestamp: '15 minutos atras',
+    description: 'Negocio cerrado: R$ 45.000',
+    timestamp: 'hace 15 minutos',
     user: { ...currentUser, name: 'Ana Paula' },
   },
   {
     id: '3',
     type: 'task_completed',
-    description: 'Tarefa completada: Follow-up',
-    timestamp: '1 hora atras',
+    description: 'Tarea completada: Follow-up',
+    timestamp: 'hace 1 hora',
     user: { ...currentUser, name: 'Bruno Costa' },
   },
   {
     id: '4',
     type: 'email_sent',
-    description: 'Email enviado: Proposta',
-    timestamp: '2 horas atras',
+    description: 'Email enviado: Propuesta',
+    timestamp: 'hace 2 horas',
     user: { ...currentUser, name: 'Carla Souza' },
   },
 ]
@@ -195,23 +195,23 @@ export const activitiesData: NexusActivity[] = [
 export const notificationsData: NexusNotification[] = [
   {
     id: '1',
-    title: 'Novo lead qualificado',
+    title: 'Nuevo lead calificado',
     message: 'TechCorp entrou em contato via website',
-    timestamp: '5 minutos atras',
+    timestamp: 'hace 5 minutos',
     read: false,
   },
   {
     id: '2',
-    title: 'Tarefa proxima do vencimento',
-    message: 'Follow-up com GlobalTech vence em 2 horas',
-    timestamp: '30 minutos atras',
+    title: 'Tarea próxima al vencimiento',
+    message: 'El follow-up con GlobalTech vence en 2 horas',
+    timestamp: 'hace 30 minutos',
     read: false,
   },
   {
     id: '3',
-    title: 'Negocio fechado',
-    message: 'Ana Paula fechou o negocio com EnterpriseX',
-    timestamp: '1 hora atras',
+    title: 'Negocio cerrado',
+    message: 'Ana Paula cerró el negocio con EnterpriseX',
+    timestamp: 'hace 1 hora',
     read: false,
   },
 ]
@@ -227,7 +227,7 @@ export const conversionChartData: NexusChartData[] = [
 
 export const sourceChartData: NexusChartData[] = [
   { name: 'Website', value: 35, color: '#6366f1' },
-  { name: 'Indicacao', value: 25, color: '#8b5cf6' },
+  { name: 'Indicación', value: 25, color: '#8b5cf6' },
   { name: 'LinkedIn', value: 20, color: '#3b82f6' },
   { name: 'Email', value: 12, color: '#06b6d4' },
   { name: 'Outros', value: 8, color: '#64748b' },

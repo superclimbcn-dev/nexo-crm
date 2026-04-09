@@ -34,7 +34,7 @@ const mockConversations = [
       avatar: null,
     },
     lastMessage: {
-      content: 'Obrigada! Vou analisar a proposta e retorno em breve.',
+      content: 'Gracias. Voy a revisar la propuesta y responder pronto.',
       createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
       status: 'READ',
     },
@@ -51,7 +51,7 @@ const mockConversations = [
       avatar: null,
     },
     lastMessage: {
-      content: 'Qual o valor do plano Enterprise?',
+      content: '¿Cuál es el precio del plan Enterprise?',
       createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
       status: 'DELIVERED',
     },
@@ -68,7 +68,7 @@ const mockConversations = [
       avatar: null,
     },
     lastMessage: {
-      content: 'Podemos agendar uma call para amanhã?',
+      content: '¿Podemos agendar una llamada para mañana?',
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       status: 'READ',
     },
@@ -85,7 +85,7 @@ const mockConversations = [
       avatar: null,
     },
     lastMessage: {
-      content: 'Vou enviar o contrato assinado ainda hoje.',
+      content: 'Voy a enviar el contrato firmado hoy mismo.',
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
       status: 'READ',
     },
@@ -100,7 +100,7 @@ const mockMessages = [
     id: 'm1',
     direction: 'INBOUND',
     type: 'TEXT',
-    content: 'Olá! Gostaria de saber mais sobre os planos de vocês.',
+    content: '¡Hola! Me gustaría saber más sobre sus planes.',
     createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
     status: 'READ',
     aiGenerated: false,
@@ -118,7 +118,7 @@ const mockMessages = [
     id: 'm3',
     direction: 'INBOUND',
     type: 'TEXT',
-    content: 'Interessante! Qual o valor do plano Enterprise?',
+      content: 'Interesante. ¿Cuál es el precio del plan Enterprise?',
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     status: 'READ',
     aiGenerated: false,
@@ -182,14 +182,14 @@ export default function InboxPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar conversas..."
+                placeholder="Buscar conversaciones..."
                 className="pl-10 bg-background"
               />
             </div>
             <div className="flex gap-2">
               <Badge variant="default" className="cursor-pointer">Todas</Badge>
-              <Badge variant="outline" className="cursor-pointer">Não lidas</Badge>
-              <Badge variant="outline" className="cursor-pointer">Minhas</Badge>
+              <Badge variant="outline" className="cursor-pointer">No leídas</Badge>
+              <Badge variant="outline" className="cursor-pointer">Mías</Badge>
             </div>
           </div>
 
@@ -322,7 +322,7 @@ export default function InboxPage() {
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Digite sua mensagem..."
+                  placeholder="Escribe tu mensaje..."
                   className="flex-1"
                 />
                 <Button onClick={handleSendMessage} size="icon">
@@ -335,8 +335,8 @@ export default function InboxPage() {
           <div className="flex-1 flex items-center justify-center bg-background">
             <div className="text-center text-muted-foreground">
               <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">Selecione uma conversa</p>
-              <p className="text-sm">Escolha uma conversa para começar</p>
+              <p className="text-lg font-medium">Selecciona una conversación</p>
+              <p className="text-sm">Elige una conversación para empezar</p>
             </div>
           </div>
         )}
@@ -357,7 +357,7 @@ export default function InboxPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-muted-foreground uppercase">Status no Pipeline</label>
+                <label className="text-xs text-muted-foreground uppercase">Estado en el Pipeline</label>
                 <select className="w-full mt-1 p-2 rounded-md bg-background border border-border text-sm">
                   <option>Novo</option>
                   <option>Qualificado</option>
@@ -380,7 +380,7 @@ export default function InboxPage() {
               </div>
 
               <div className="pt-4 border-t border-border">
-                <h4 className="text-sm font-medium mb-2">Ações Rápidas</h4>
+                <h4 className="text-sm font-medium mb-2">Acciones Rápidas</h4>
                 <div className="space-y-2">
                   <Button variant="outline" className="w-full justify-start">
                     <Clock className="w-4 h-4 mr-2" />
@@ -388,7 +388,7 @@ export default function InboxPage() {
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
                     <FileText className="w-4 h-4 mr-2" />
-                    Enviar Orçamento
+                    Enviar Presupuesto
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
                     <User className="w-4 h-4 mr-2" />

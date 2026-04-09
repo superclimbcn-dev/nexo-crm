@@ -125,8 +125,8 @@ export default function CRMPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Pipeline de Vendas</h1>
-            <p className="text-muted-foreground">Gerencie suas oportunidades</p>
+            <h1 className="text-2xl font-bold">Pipeline de Ventas</h1>
+            <p className="text-muted-foreground">Gestiona tus oportunidades</p>
           </div>
           <div className="flex gap-2">
             <div className="relative">
@@ -139,7 +139,7 @@ export default function CRMPage() {
             </Button>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Nova Oportunidade
+              Nueva Oportunidad
             </Button>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function CRMPage() {
             <p className="text-2xl font-bold">{deals.filter((d) => d.stage !== 'closed_won' && d.stage !== 'closed_lost').length}</p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
+            <p className="text-sm text-muted-foreground">Tasa de Conversión</p>
             <p className="text-2xl font-bold">24.8%</p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">

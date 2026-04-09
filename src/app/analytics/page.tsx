@@ -89,7 +89,7 @@ export default function AnalyticsPage() {
           <div className="bg-card p-4 rounded-lg border border-border">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Novos Contatos</p>
+                <p className="text-sm text-muted-foreground">Nuevos Contactos</p>
                 <p className="text-2xl font-bold">18</p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
 
           {/* Source Pie Chart */}
           <div className="bg-card p-6 rounded-lg border border-border">
-            <h3 className="text-lg font-semibold mb-4">Origem dos Contatos</h3>
+            <h3 className="text-lg font-semibold mb-4">Origen de los Contactos</h3>
             <div className="h-64 flex items-center">
               <ResponsiveContainer width="60%" height="100%">
                 <PieChart>

@@ -82,8 +82,8 @@ export default function ContactsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Contatos</h1>
-            <p className="text-muted-foreground">Gerencie seus contatos e leads</p>
+            <h1 className="text-2xl font-bold">Contactos</h1>
+            <p className="text-muted-foreground">Gestiona tus contactos y leads</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline">
@@ -96,7 +96,7 @@ export default function ContactsPage() {
             </Button>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Novo Contato
+              Nuevo Contacto
             </Button>
           </div>
         </div>
@@ -123,13 +123,13 @@ export default function ContactsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-secondary/50">
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Contato</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Telefone</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Contacto</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Teléfono</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Empresa</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Fonte</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Origen</th>
                 <th className="text-left p-4 text-sm font-medium text-muted-foreground">Tags</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Último Contato</th>
-                <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Último Contacto</th>
+                <th className="text-right p-4 text-sm font-medium text-muted-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>

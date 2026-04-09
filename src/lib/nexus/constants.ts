@@ -22,15 +22,15 @@ export const NEXUS_NAV_ITEMS: NexusNavItem[] = [
   { id: 'leads', label: 'Leads', icon: 'Users', href: '/contacts', badge: 12 },
   { id: 'oportunidades', label: 'Oportunidades', icon: 'Target', href: '/crm' },
   { id: 'pipeline', label: 'Pipeline', icon: 'GitBranch', href: '/crm' },
-  { id: 'tarefas', label: 'Tarefas', icon: 'CheckSquare', href: '/automations', badge: 5 },
-  { id: 'relatorios', label: 'Relatorios', icon: 'BarChart3', href: '/analytics' },
-  { id: 'configuracoes', label: 'Configuracoes', icon: 'Settings', href: '/templates' },
+  { id: 'tarefas', label: 'Tareas', icon: 'CheckSquare', href: '/automations', badge: 5 },
+  { id: 'relatorios', label: 'Informes', icon: 'BarChart3', href: '/analytics' },
+  { id: 'configuracoes', label: 'Configuración', icon: 'Settings', href: '/templates' },
 ]
 
 export const NEXUS_STATUS_CONFIG = {
   novo: { label: 'Novo', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
   em_negociacao: {
-    label: 'Em Negociacao',
+    label: 'En negociación',
     color: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   },
   convertido: { label: 'Convertido', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
@@ -39,7 +39,7 @@ export const NEXUS_STATUS_CONFIG = {
 
 export const NEXUS_SOURCE_ICONS: Record<string, string> = {
   Website: 'Globe',
-  Indicacao: 'UserPlus',
+  Indicación: 'UserPlus',
   LinkedIn: 'Linkedin',
   Email: 'Mail',
   Facebook: 'Facebook',

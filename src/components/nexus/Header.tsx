@@ -38,9 +38,9 @@ export function Header({ user, notifications, isSidebarCollapsed }: HeaderProps)
           <div className="flex items-center gap-2 text-xs text-[#64748b]">
             <span>Dashboard</span>
             <span>/</span>
-            <span className="text-[#9fb0ca]">Visao Geral</span>
+            <span className="text-[#9fb0ca]">Vista General</span>
           </div>
-          <h1 className="mt-1 text-3xl font-semibold text-white">Visao Geral</h1>
+          <h1 className="mt-1 text-3xl font-semibold text-white">Vista General</h1>
         </div>
 
         <div className="flex items-center gap-4">
@@ -72,10 +72,10 @@ export function Header({ user, notifications, isSidebarCollapsed }: HeaderProps)
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 border-[#1c1f26] bg-[#161920] text-white">
               <div className="flex items-center justify-between border-b border-[#1c1f26] px-3 py-2">
-                <span className="font-medium">Notificacoes</span>
+                <span className="font-medium">Notificaciones</span>
                 {unreadCount > 0 ? (
                   <button onClick={() => setUnreadCount(0)} className="text-xs text-indigo-400 hover:text-indigo-300">
-                    Marcar todas como lidas
+                    Marcar todas como leídas
                   </button>
                 ) : null}
               </div>
@@ -140,12 +140,12 @@ export function Header({ user, notifications, isSidebarCollapsed }: HeaderProps)
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer hover:bg-[#1c1f26] focus:bg-[#1c1f26]">
                 <Settings className="mr-2 h-4 w-4" />
-                Configuracoes
+                Configuración
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer text-rose-400 hover:bg-rose-500/10 focus:bg-rose-500/10">
                 <X className="mr-2 h-4 w-4" />
-                Sair
+                Salir
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -27,8 +27,8 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
       className="h-full overflow-hidden rounded-2xl border border-[#1c1f26] bg-[#161920]"
     >
       <div className="border-b border-[#1c1f26] px-6 py-5">
-        <h3 className="text-2xl font-semibold text-white">Atividades Recentes</h3>
-        <p className="mt-2 text-sm text-[#9fb0ca]">Ultimas acoes da equipe</p>
+        <h3 className="text-2xl font-semibold text-white">Actividad Reciente</h3>
+        <p className="mt-2 text-sm text-[#9fb0ca]">Últimas acciones del equipo</p>
       </div>
 
       <ScrollArea className="h-[420px]">

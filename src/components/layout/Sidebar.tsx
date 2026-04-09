@@ -27,17 +27,17 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Inbox', href: '/inbox', icon: Inbox, badge: 12 },
-  { label: 'Contatos', href: '/contacts', icon: Users },
+  { label: 'Contactos', href: '/contacts', icon: Users },
   { label: 'CRM / Pipeline', href: '/crm', icon: BarChart3 },
-  { label: 'Campanhas', href: '/campaigns', icon: Megaphone },
-  { label: 'Automações', href: '/automations', icon: Bot },
+  { label: 'Campañas', href: '/campaigns', icon: Megaphone },
+  { label: 'Automatizaciones', href: '/automations', icon: Bot },
   { label: 'Templates', href: '/templates', icon: FileText },
   { label: 'Analytics', href: '/analytics', icon: BarChart3 },
 ]
 
 const bottomNavItems: NavItem[] = [
-  { label: 'Configurações', href: '/settings', icon: Settings },
-  { label: 'Ajuda', href: '/help', icon: HelpCircle },
+  { label: 'Configuración', href: '/settings', icon: Settings },
+  { label: 'Ayuda', href: '/help', icon: HelpCircle },
 ]
 
 export function Sidebar() {
@@ -51,29 +51,21 @@ export function Sidebar() {
         collapsed ? 'w-16' : 'w-64'
       )}
     >
-      {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-border">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <MessageSquare className="w-5 h-5 text-white" />
           </div>
-          {!collapsed && (
-            <span className="font-semibold text-lg text-white">Nexo Inbox</span>
-          )}
+          {!collapsed && <span className="font-semibold text-lg text-white">Nexo Inbox</span>}
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="p-1 rounded-md hover:bg-secondary text-muted-foreground"
         >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
 
-      {/* Main Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href)
@@ -108,7 +100,6 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom Navigation */}
       <nav className="py-4 px-2 space-y-1 border-t border-border">
         {bottomNavItems.map((item) => {
           const isActive = pathname.startsWith(item.href)

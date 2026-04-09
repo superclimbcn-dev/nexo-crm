@@ -109,7 +109,7 @@ export default function CampaignsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Campanhas</h1>
+            <h1 className="text-2xl font-bold">Campañas</h1>
             <p className="text-muted-foreground">Envie mensagens em massa para seus contatos</p>
           </div>
           <Button>
@@ -121,7 +121,7 @@ export default function CampaignsPage() {
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Campanhas Ativas</p>
+            <p className="text-sm text-muted-foreground">Campañas Activas</p>
             <p className="text-2xl font-bold">{campaigns.filter((c) => c.status === 'RUNNING').length}</p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">

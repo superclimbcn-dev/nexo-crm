@@ -43,8 +43,8 @@ export function ChartsSection({
         transition={{ delay: 0.55 }}
         className="rounded-2xl border border-[#1c1f26] bg-[#161920] p-6"
       >
-        <h3 className="text-xl font-semibold text-white">Taxa de Conversao por Mes</h3>
-        <p className="mt-1 text-sm text-[#9fb0ca]">Ultimos 6 meses</p>
+        <h3 className="text-xl font-semibold text-white">Tasa de Conversión por Mes</h3>
+        <p className="mt-1 text-sm text-[#9fb0ca]">Últimos 6 meses</p>
         <div className="mt-5 h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={conversionData}>
@@ -70,7 +70,7 @@ export function ChartsSection({
         transition={{ delay: 0.6 }}
         className="rounded-2xl border border-[#1c1f26] bg-[#161920] p-6"
       >
-        <h3 className="text-xl font-semibold text-white">Distribuicao por Fonte</h3>
+        <h3 className="text-xl font-semibold text-white">Distribución por Origen</h3>
         <p className="mt-1 text-sm text-[#9fb0ca]">Total de leads por canal</p>
         <div className="mt-5 flex h-72 items-center">
           <ResponsiveContainer width="60%" height="100%">
@@ -101,8 +101,8 @@ export function ChartsSection({
         transition={{ delay: 0.65 }}
         className="rounded-2xl border border-[#1c1f26] bg-[#161920] p-6 xl:col-span-2"
       >
-        <h3 className="text-xl font-semibold text-white">Evolucao do Pipeline</h3>
-        <p className="mt-1 text-sm text-[#9fb0ca]">Valor total em negociacao</p>
+        <h3 className="text-xl font-semibold text-white">Evolución del Pipeline</h3>
+        <p className="mt-1 text-sm text-[#9fb0ca]">Valor total en negociación</p>
         <div className="mt-5 h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={pipelineData}>

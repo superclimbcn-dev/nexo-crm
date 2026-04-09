@@ -41,7 +41,7 @@ const mockAutomations: Automation[] = [
   },
   {
     id: '2',
-    name: 'Boas-vindas Novo Contato',
+    name: 'Bienvenida Nuevo Contacto',
     triggerType: 'NEW_CONVERSATION',
     triggerConfig: {},
     isActive: true,
@@ -50,7 +50,7 @@ const mockAutomations: Automation[] = [
   },
   {
     id: '3',
-    name: 'Follow-up Inatividade',
+    name: 'Seguimiento por Inactividad',
     triggerType: 'INACTIVITY',
     triggerConfig: { delay: 30 },
     isActive: true,
@@ -70,8 +70,8 @@ const mockAutomations: Automation[] = [
 
 const triggerConfig = {
   KEYWORD: { label: 'Palavra-chave', icon: MessageSquare, color: 'bg-blue-500' },
-  NEW_CONVERSATION: { label: 'Novo Contato', icon: Zap, color: 'bg-green-500' },
-  INACTIVITY: { label: 'Inatividade', icon: Clock, color: 'bg-orange-500' },
+  NEW_CONVERSATION: { label: 'Nuevo Contacto', icon: Zap, color: 'bg-green-500' },
+  INACTIVITY: { label: 'Inactividad', icon: Clock, color: 'bg-orange-500' },
   SCHEDULE: { label: 'Agendado', icon: TrendingUp, color: 'bg-purple-500' },
 }
 
@@ -92,35 +92,35 @@ export default function AutomationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Automações</h1>
+            <h1 className="text-2xl font-bold">Automatizaciones</h1>
             <p className="text-muted-foreground">Configure respostas automáticas e fluxos de chatbot</p>
           </div>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            Nova Automação
+            Nueva Automatización
           </Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Automações Ativas</p>
+            <p className="text-sm text-muted-foreground">Automatizaciones Activas</p>
             <p className="text-2xl font-bold text-emerald-500">
               {automations.filter((a) => a.isActive).length}
             </p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Total de Execuções</p>
+            <p className="text-sm text-muted-foreground">Total de Ejecuciones</p>
             <p className="text-2xl font-bold">
               {automations.reduce((sum, a) => sum + a.executionCount, 0).toLocaleString()}
             </p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Execuções Hoje</p>
+            <p className="text-sm text-muted-foreground">Ejecuciones Hoy</p>
             <p className="text-2xl font-bold text-blue-500">47</p>
           </div>
           <div className="bg-card p-4 rounded-lg border border-border">
-            <p className="text-sm text-muted-foreground">Taxa de Sucesso</p>
+            <p className="text-sm text-muted-foreground">Tasa de Éxito</p>
             <p className="text-2xl font-bold text-purple-500">98.2%</p>
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function AutomationsPage() {
                     <div className="mt-3 p-3 bg-secondary/50 rounded-lg">
                       {automation.triggerType === 'KEYWORD' && (
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Palavras-chave:</span>
+                          <span className="text-sm text-muted-foreground">Palabras clave:</span>
                           <div className="flex gap-1">
                             {automation.triggerConfig.keywords.map((kw: string) => (
                               <Badge key={kw} variant="secondary">
@@ -219,7 +219,7 @@ export default function AutomationsPage() {
                       ) : (
                         <>
                           <Play className="w-4 h-4 mr-2" />
-                          Ativar
+                          Activar
                         </>
                       )}
                     </Button>
