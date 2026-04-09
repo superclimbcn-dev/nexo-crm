@@ -1,0 +1,384 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String    @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?   @db.Text
+  access_token      String?   @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?   @db.Text
+  session_state     String?
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  password      String?        @db.Text
+  emailVerified DateTime?
+  image         String?
+  role          UserRole       @default(AGENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  conversations Conversation[]
+  campaigns     Campaign[]
+  deals         Deal[]
+  activities    Activity[]
+  automationLogs AutomationLog[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Contact {
+  id            String         @id @default(cuid())
+  phone         String         @unique
+  name          String?
+  email         String?
+  avatar        String?
+  company       String?
+  jobTitle      String?
+  source        String?        // website, indicacao, etc
+  customFields  Json?          // {cpf: "123", endereco: "..."}
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+  deals         Deal[]
+  campaignMessages CampaignMessage[]
+  tags          Tag[]
+  notes         Note[]
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String
+  color     String    @default("#6366f1")
+  createdAt DateTime  @default(now())
+  contacts  Contact[]
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  contactId String
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdBy String
+  createdAt DateTime @default(now())
+}
+
+model Conversation {
+  id            String               @id @default(cuid())
+  contactId     String
+  contact       Contact              @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  agentId       String?
+  agent         User?                @relation(fields: [agentId], references: [id])
+  status        ConversationStatus   @default(OPEN)
+  priority      Priority             @default(NORMAL)
+  source        String               @default("whatsapp")
+  lastMessageAt DateTime             @default(now())
+  createdAt     DateTime             @default(now())
+  messages      Message[]
+  deal          Deal?
+  aiEnabled     Boolean              @default(false)
+}
+
+model Message {
+  id              String          @id @default(cuid())
+  conversationId  String
+  conversation    Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction       MessageDirection
+  type            MessageType     @default(TEXT)
+  content         String          @db.Text
+  mediaUrl        String?
+  mediaType       String?
+  templateName    String?
+  templateData    Json?
+  status          MessageStatus   @default(SENT)
+  whatsappId      String?         @unique
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  readAt          DateTime?
+  failedAt        DateTime?
+  errorMessage    String?
+  createdAt       DateTime        @default(now())
+  aiGenerated     Boolean         @default(false)
+  aiPrompt        String?         @db.Text
+  aiModel         String?
+}
+
+model Campaign {
+  id             String            @id @default(cuid())
+  name           String
+  createdById    String
+  createdBy      User              @relation(fields: [createdById], references: [id])
+  templateName   String
+  templateData   Json
+  mediaUrl       String?
+  audienceFilter Json?
+  audienceCount  Int               @default(0)
+  status         CampaignStatus    @default(DRAFT)
+  scheduledAt    DateTime?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  rateLimit      Int               @default(30)
+  stats          Json?             // {sent: 100, delivered: 95, read: 80, failed: 5}
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  messages       CampaignMessage[]
+}
+
+model CampaignMessage {
+  id            String                   @id @default(cuid())
+  campaignId    String
+  campaign      Campaign                 @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contactId     String
+  contact       Contact                  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  status        CampaignMessageStatus    @default(PENDING)
+  whatsappId    String?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  readAt        DateTime?
+  failedAt      DateTime?
+  errorMessage  String?
+  createdAt     DateTime                 @default(now())
+}
+
+model Deal {
+  id             String     @id @default(cuid())
+  contactId      String
+  contact        Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  conversationId String?    @unique
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  title          String
+  value          Decimal?   @db.Decimal(10, 2)
+  currency       String     @default("BRL")
+  stage          DealStage  @default(NEW)
+  probability    Int        @default(20)
+  expectedClose  DateTime?
+  actualClose    DateTime?
+  status         DealStatus @default(OPEN)
+  assignedToId   String?
+  assignedTo     User?      @relation(fields: [assignedToId], references: [id])
+  source         String?
+  notes          String?    @db.Text
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  activities     Activity[]
+}
+
+model Activity {
+  id            String       @id @default(cuid())
+  dealId        String
+  deal          Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  type          ActivityType
+  title         String
+  description   String?      @db.Text
+  scheduledAt   DateTime?
+  completedAt   DateTime?
+  createdById   String
+  createdBy     User         @relation(fields: [createdById], references: [id])
+  createdAt     DateTime     @default(now())
+}
+
+model Template {
+  id             String           @id @default(cuid())
+  name           String
+  whatsappName   String           @unique
+  category       TemplateCategory
+  language       String           @default("pt_BR")
+  headerType     HeaderType       @default(NONE)
+  headerText     String?
+  headerMediaUrl String?
+  bodyText       String           @db.Text
+  footerText     String?
+  buttons        Json?
+  status         TemplateStatus   @default(APPROVED)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Automation {
+  id              String        @id @default(cuid())
+  name            String
+  triggerType     TriggerType
+  triggerConfig   Json
+  flow            Json          // JSON do fluxo de nós
+  isActive        Boolean       @default(true)
+  executionCount  Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  logs            AutomationLog[]
+}
+
+model AutomationLog {
+  id            String      @id @default(cuid())
+  automationId  String
+  automation    Automation  @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  contactId     String?
+  conversationId String?
+  executedById  String?
+  executedBy    User?       @relation(fields: [executedById], references: [id])
+  input         Json?
+  output        Json?
+  success       Boolean
+  errorMessage  String?
+  executedAt    DateTime    @default(now())
+}
+
+model Settings {
+  id                    String   @id @default(cuid())
+  aiEnabled             Boolean  @default(false)
+  aiModel               String   @default("gpt-4-turbo-preview")
+  aiSystemPrompt        String?  @db.Text
+  aiTemperature         Float    @default(0.7)
+  aiMaxTokens           Int      @default(500)
+  whatsappPhoneId       String?
+  whatsappBusinessId    String?
+  whatsappAccessToken   String?  @db.Text
+  whatsappWebhookSecret String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  MANAGER
+  AGENT
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  PENDING
+  SPAM
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  TEMPLATE
+  LOCATION
+  CONTACT
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum CampaignMessageStatus {
+  PENDING
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum DealStage {
+  NEW
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+}
+
+enum TemplateCategory {
+  MARKETING
+  UTILITY
+  AUTHENTICATION
+}
+
+enum TemplateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ActivityType {
+  CALL
+  MEETING
+  EMAIL
+  NOTE
+  TASK
+}
+
+enum HeaderType {
+  NONE
+  TEXT
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum TriggerType {
+  KEYWORD
+  NEW_CONVERSATION
+  INACTIVITY
+  SCHEDULE
+  WEBHOOK
+}
