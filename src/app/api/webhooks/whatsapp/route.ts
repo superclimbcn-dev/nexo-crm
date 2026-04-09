@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { MessageType, MessageStatus } from '@prisma/client'
 import crypto from 'crypto'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+async function getPrisma() {
+  const { prisma } = await import('@/lib/prisma')
+  return prisma
+}
 
 // Verify webhook signature from Meta
 function verifySignature(body: string, signature: string | null, secret: string): boolean {
@@ -80,6 +87,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function processIncomingMessage(whatsappMsg: any, value: any) {
+  const prisma = await getPrisma()
   const phone = whatsappMsg.from
   const profile = value.contacts?.[0]?.profile
 
@@ -145,6 +153,7 @@ async function processIncomingMessage(whatsappMsg: any, value: any) {
 }
 
 async function processStatusUpdate(status: any) {
+  const prisma = await getPrisma()
   const whatsappId = status.id
   const messageStatus = status.status // sent, delivered, read, failed
 
@@ -228,6 +237,7 @@ function mapMessageType(type: string): MessageType {
 }
 
 async function checkAutomations(conversation: any, contact: any, messageContent: string) {
+  const prisma = await getPrisma()
   // Get active automations
   const automations = await prisma.automation.findMany({
     where: { isActive: true },
@@ -269,6 +279,7 @@ async function checkAutomations(conversation: any, contact: any, messageContent:
 }
 
 async function executeAutomation(automation: any, conversation: any, contact: any) {
+  const prisma = await getPrisma()
   // Log execution
   await prisma.automationLog.create({
     data: {
