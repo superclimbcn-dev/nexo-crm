@@ -1,13 +1,16 @@
 import NextAuth from 'next-auth'
-import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-function createAuthHandler() {
+async function createAuthHandler() {
+  const [{ PrismaAdapter }, { prisma }] = await Promise.all([
+    import('@auth/prisma-adapter'),
+    import('@/lib/prisma'),
+  ])
+
   return NextAuth({
     adapter: PrismaAdapter(prisma),
     secret: process.env.NEXTAUTH_SECRET,
@@ -82,11 +85,11 @@ function createAuthHandler() {
 }
 
 export async function GET(request: Request, context: unknown) {
-  const handler = createAuthHandler()
+  const handler = await createAuthHandler()
   return handler(request, context as never)
 }
 
 export async function POST(request: Request, context: unknown) {
-  const handler = createAuthHandler()
+  const handler = await createAuthHandler()
   return handler(request, context as never)
 }
