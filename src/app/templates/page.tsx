@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Image,
   FileText,
+  X,
 } from 'lucide-react'
 
 interface Template {
@@ -98,12 +99,104 @@ const statusConfig = {
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState(mockTemplates)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showNewTemplateModal, setShowNewTemplateModal] = useState(false)
+  const [showEditTemplateModal, setShowEditTemplateModal] = useState(false)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [templateToEdit, setTemplateToEdit] = useState<Template | null>(null)
+  const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null)
+  const [newTemplateName, setNewTemplateName] = useState('')
+  const [newTemplateWhatsappName, setNewTemplateWhatsappName] = useState('')
+  const [newTemplateBodyText, setNewTemplateBodyText] = useState('')
+  const [newTemplateCategory, setNewTemplateCategory] = useState<Template['category']>('UTILITY')
 
   const filteredTemplates = templates.filter(
     (template) =>
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.whatsappName.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleCreateTemplate = () => {
+    if (!newTemplateName || !newTemplateWhatsappName || !newTemplateBodyText) {
+      alert('Por favor, completa todos los campos obligatorios')
+      return
+    }
+
+    const newTemplate: Template = {
+      id: String(Date.now()),
+      name: newTemplateName,
+      whatsappName: newTemplateWhatsappName,
+      category: newTemplateCategory,
+      headerType: 'NONE',
+      bodyText: newTemplateBodyText,
+      status: 'PENDING',
+      language: 'es',
+    }
+
+    setTemplates([...templates, newTemplate])
+    setShowNewTemplateModal(false)
+    setNewTemplateName('')
+    setNewTemplateWhatsappName('')
+    setNewTemplateBodyText('')
+    setNewTemplateCategory('UTILITY')
+  }
+
+  const handleEditTemplate = (template: Template) => {
+    setTemplateToEdit(template)
+    setNewTemplateName(template.name)
+    setNewTemplateWhatsappName(template.whatsappName)
+    setNewTemplateBodyText(template.bodyText)
+    setNewTemplateCategory(template.category)
+    setShowEditTemplateModal(true)
+  }
+
+  const handleUpdateTemplate = () => {
+    if (!newTemplateName || !newTemplateWhatsappName || !newTemplateBodyText || !templateToEdit) {
+      alert('Por favor, completa todos los campos obligatorios')
+      return
+    }
+
+    const updatedTemplate: Template = {
+      ...templateToEdit,
+      name: newTemplateName,
+      whatsappName: newTemplateWhatsappName,
+      category: newTemplateCategory,
+      bodyText: newTemplateBodyText,
+      status: 'PENDING', // Cambia a pendiente para re-evaluación
+    }
+
+    setTemplates(templates.map(t => t.id === templateToEdit.id ? updatedTemplate : t))
+    setShowEditTemplateModal(false)
+    setTemplateToEdit(null)
+    setNewTemplateName('')
+    setNewTemplateWhatsappName('')
+    setNewTemplateBodyText('')
+    setNewTemplateCategory('UTILITY')
+  }
+
+  const handleCopyTemplate = (template: Template) => {
+    const copiedTemplate: Template = {
+      ...template,
+      id: String(Date.now()),
+      name: `${template.name} (Copia)`,
+      whatsappName: `${template.whatsappName}_copy`,
+      status: 'PENDING',
+    }
+
+    setTemplates([...templates, copiedTemplate])
+  }
+
+  const handleDeleteTemplate = (template: Template) => {
+    setTemplateToDelete(template)
+    setShowDeleteConfirmModal(true)
+  }
+
+  const confirmDeleteTemplate = () => {
+    if (templateToDelete) {
+      setTemplates(templates.filter(t => t.id !== templateToDelete.id))
+      setShowDeleteConfirmModal(false)
+      setTemplateToDelete(null)
+    }
+  }
 
   return (
     <MainLayout>
@@ -114,11 +207,78 @@ export default function TemplatesPage() {
             <h1 className="text-2xl font-bold">Plantillas</h1>
             <p className="text-muted-foreground">Gestiona tus plantillas aprobadas por WhatsApp</p>
           </div>
-          <Button>
+          <Button onClick={() => setShowNewTemplateModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Nueva Plantilla
           </Button>
         </div>
+
+        {/* Modal Nueva Plantilla */}
+        {showNewTemplateModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-card rounded-lg border border-border p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Nueva Plantilla</h2>
+                <Button variant="ghost" size="icon" onClick={() => setShowNewTemplateModal(false)}>
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nombre de la Plantilla</label>
+                  <Input
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                    placeholder="Ej: Bienvenida"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nombre en WhatsApp</label>
+                  <Input
+                    value={newTemplateWhatsappName}
+                    onChange={(e) => setNewTemplateWhatsappName(e.target.value)}
+                    placeholder="Ej: bienvenida"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Categoría</label>
+                  <select
+                    value={newTemplateCategory}
+                    onChange={(e) => setNewTemplateCategory(e.target.value as Template['category'])}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="MARKETING">Marketing</option>
+                    <option value="UTILITY">Utilidad</option>
+                    <option value="AUTHENTICATION">Autenticación</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Texto del Mensaje</label>
+                  <textarea
+                    value={newTemplateBodyText}
+                    onChange={(e) => setNewTemplateBodyText(e.target.value)}
+                    placeholder="Ej: Hola {{1}}. Bienvenido a nuestra empresa."
+                    rows={4}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setShowNewTemplateModal(false)} className="flex-1">
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleCreateTemplate} className="flex-1">
+                    Crear Plantilla
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4">

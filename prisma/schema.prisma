@@ -63,7 +63,8 @@ model VerificationToken {
 
 model Contact {
   id            String         @id @default(cuid())
-  phone         String         @unique
+  phoneNumber   String         @unique
+  status        String         @default("new") // Conversation triage state
   name          String?
   email         String?
   avatar        String?
