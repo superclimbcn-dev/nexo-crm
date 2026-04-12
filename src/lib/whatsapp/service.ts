@@ -118,8 +118,17 @@ interface SendWhatsAppMessageResponse {
 }
 
 interface HandleIncomingMessageResult {
+  requestId: string
   replyMessage: string | null
   replySent: boolean
+}
+
+interface LogContext {
+  requestId: string
+  phoneNumber?: string
+  messageSid?: string
+  status?: string
+  details?: Record<string, string | number | boolean | null | undefined>
 }
 
 type AutomationRecord = Awaited<ReturnType<typeof fetchActiveAutomations>>[number]
@@ -151,6 +160,19 @@ const MENU_SELECTIONS: Record<MenuOption, ServiceSelection> = {
     confirmationMessage:
       'Perfeito! Você escolheu Carros. Agora, por favor, envie fotos para avaliarmos o serviço.',
   },
+}
+
+function logEvent(event: string, context: LogContext): void {
+  console.log(
+    JSON.stringify({
+      event,
+      requestId: context.requestId,
+      phoneNumber: context.phoneNumber,
+      messageSid: context.messageSid,
+      status: context.status,
+      ...context.details,
+    }),
+  )
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -217,12 +239,19 @@ function ensureWhatsAppConfig(): { apiVersion: string; phoneNumberId: string; to
 }
 
 function verifyMetaSignature(rawBody: string, signature: string | null, secret: string): boolean {
-  if (!signature) {
+  if (!signature || !secret.trim()) {
     return false
   }
 
   const expectedSignature = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(`sha256=${expectedSignature}`))
+  const receivedSignature = Buffer.from(signature)
+  const computedSignature = Buffer.from(`sha256=${expectedSignature}`)
+
+  if (receivedSignature.length !== computedSignature.length) {
+    return false
+  }
+
+  return crypto.timingSafeEqual(receivedSignature, computedSignature)
 }
 
 function isMetaIncomingMessageRecord(value: unknown): value is MetaIncomingMessageRecord {
@@ -560,6 +589,7 @@ async function updateContactStatus(contactId: string, status: TriageStatus): Pro
 }
 
 async function decideReply(params: {
+  requestId: string
   contact: ContactRecord
   isNewContact: boolean
   payload: WhatsAppPayload
@@ -578,6 +608,16 @@ async function decideReply(params: {
 
   if (!isMenuOption(params.payload.body)) {
     if (params.contact.status !== 'waiting_reply') {
+      logEvent('Triage state transition', {
+        requestId: params.requestId,
+        phoneNumber: params.contact.phoneNumber,
+        messageSid: params.payload.messageSid,
+        status: 'waiting_reply',
+        details: {
+          oldStatus: params.contact.status,
+          newStatus: 'waiting_reply',
+        },
+      })
       await updateContactStatus(params.contact.id, 'waiting_reply')
     }
 
@@ -585,6 +625,17 @@ async function decideReply(params: {
   }
 
   const selection = MENU_SELECTIONS[params.payload.body]
+  logEvent('Triage state transition', {
+    requestId: params.requestId,
+    phoneNumber: params.contact.phoneNumber,
+    messageSid: params.payload.messageSid,
+    status: selection.nextStatus,
+    details: {
+      oldStatus: params.contact.status,
+      newStatus: selection.nextStatus,
+      selectedOption: params.payload.body,
+    },
+  })
   await updateContactStatus(params.contact.id, selection.nextStatus)
   return selection.confirmationMessage
 }
@@ -680,7 +731,11 @@ async function checkAutomations(params: {
   }
 }
 
-async function sendWhatsAppMessage(to: string, message: string): Promise<SendWhatsAppMessageResponse> {
+async function sendWhatsAppMessage(
+  to: string,
+  message: string,
+  requestId = crypto.randomUUID(),
+): Promise<SendWhatsAppMessageResponse> {
   const config = ensureWhatsAppConfig()
   const url = `https://graph.facebook.com/${config.apiVersion}/${config.phoneNumberId}/messages`
 
@@ -703,6 +758,14 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<SendWha
   })
 
   const responseBody: unknown = await response.json()
+  logEvent('Meta API Response Status', {
+    requestId,
+    phoneNumber: to,
+    status: String(response.status),
+    details: {
+      ok: response.ok,
+    },
+  })
 
   if (!response.ok) {
     const apiErrorMessage =
@@ -724,6 +787,14 @@ async function sendWhatsAppMessage(to: string, message: string): Promise<SendWha
 }
 
 async function handleIncomingMessage(payload: WhatsAppPayload): Promise<HandleIncomingMessageResult> {
+  const requestId = crypto.randomUUID()
+  logEvent('Incoming webhook payload verified', {
+    requestId,
+    phoneNumber: payload.phoneNumber,
+    messageSid: payload.messageSid,
+    status: payload.messageType,
+  })
+
   const { contact, isNewContact } = await findOrCreateContact({
     phoneNumber: payload.phoneNumber,
     profileName: payload.profileName,
@@ -736,19 +807,21 @@ async function handleIncomingMessage(payload: WhatsAppPayload): Promise<HandleIn
 
   if (!wasPersisted) {
     return {
+      requestId,
       replyMessage: null,
       replySent: false,
     }
   }
 
   const replyMessage = await decideReply({
+    requestId,
     contact,
     isNewContact,
     payload,
   })
 
   if (replyMessage) {
-    const response = await sendWhatsAppMessage(contact.phoneNumber, replyMessage)
+    const response = await sendWhatsAppMessage(contact.phoneNumber, replyMessage, requestId)
     const outboundMessageId = response.messages?.[0]?.id
 
     await persistOutboundMessage({
@@ -765,6 +838,7 @@ async function handleIncomingMessage(payload: WhatsAppPayload): Promise<HandleIn
   })
 
   return {
+    requestId,
     replyMessage,
     replySent: replyMessage !== null,
   }
