@@ -134,31 +134,31 @@ interface LogContext {
 type AutomationRecord = Awaited<ReturnType<typeof fetchActiveAutomations>>[number]
 
 const WELCOME_MENU = [
-  'Olá! Bem-vindo ao Superclim.',
-  'Escolha uma opção:',
+  '¡Hola! Bienvenido a Superclim.',
+  'Elige una opción:',
   '1. Sofás/Alfombras',
-  '2. Impermeabilização',
+  '2. Impermeabilización',
   '3. Carros',
 ].join('\n')
 
-const INVALID_OPTION_MESSAGE = 'Opção inválida. Por favor, escolha 1, 2 ou 3.'
-const FALLBACK_MESSAGE = 'Obrigado pela sua mensagem. Em breve entraremos em contato.'
+const INVALID_OPTION_MESSAGE = 'Opción inválida. Por favor, elige 1, 2 o 3.'
+const FALLBACK_MESSAGE = 'Gracias por tu mensaje. En breve nos pondremos en contacto contigo.'
 
 const MENU_SELECTIONS: Record<MenuOption, ServiceSelection> = {
   '1': {
     nextStatus: 'interesse_sofas_alfombras',
     confirmationMessage:
-      'Perfeito! Você escolheu Sofás/Alfombras. Agora, por favor, envie fotos para avaliarmos o serviço.',
+      '¡Perfecto! Has elegido Sofás/Alfombras. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
   },
   '2': {
     nextStatus: 'interesse_impermeabilizacion',
     confirmationMessage:
-      'Ótimo! Você escolheu Impermeabilização. Agora, por favor, envie fotos para avaliarmos o serviço.',
+      '¡Perfecto! Has elegido Impermeabilización. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
   },
   '3': {
     nextStatus: 'interesse_carros',
     confirmationMessage:
-      'Perfeito! Você escolheu Carros. Agora, por favor, envie fotos para avaliarmos o serviço.',
+      '¡Perfecto! Has elegido Carros. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
   },
 }
 
@@ -231,7 +231,7 @@ function ensureWhatsAppConfig(): { apiVersion: string; phoneNumberId: string; to
 
   if (!config) {
     throw new Error(
-      'Credenciais do WhatsApp não configuradas. Defina WHATSAPP_TOKEN e PHONE_NUMBER_ID.',
+      'Las credenciales de WhatsApp no están configuradas. Define WHATSAPP_TOKEN y PHONE_NUMBER_ID.',
     )
   }
 
@@ -411,7 +411,7 @@ function extractContentFromMetaMessage(message: MetaIncomingMessageRecord): {
       }
     case 'audio':
       return {
-        body: '(Áudio)',
+        body: '(Audio)',
         mediaUrl: message.audio?.link ?? null,
         mediaType: 'audio',
       }
@@ -423,7 +423,7 @@ function extractContentFromMetaMessage(message: MetaIncomingMessageRecord): {
       }
     default:
       return {
-        body: '(Mensagem não suportada)',
+        body: '(Mensaje no compatible)',
         mediaUrl: null,
         mediaType: null,
       }
@@ -680,8 +680,8 @@ async function executeAutomation(
       automationId: automation.id,
       contactId: contact.id,
       conversationId: conversation.id,
-      input: { message: 'Ativado' },
-      output: { action: 'Executado' },
+      input: { message: 'Activado' },
+      output: { action: 'Ejecutado' },
       success: true,
       executedAt: new Date(),
     },
@@ -774,13 +774,13 @@ async function sendWhatsAppMessage(
       isObject(responseBody.error) &&
       typeof responseBody.error.message === 'string'
         ? responseBody.error.message
-        : 'Falha ao enviar mensagem pelo WhatsApp.'
+        : 'Error al enviar el mensaje por WhatsApp.'
 
     throw new Error(apiErrorMessage)
   }
 
   if (!isSendWhatsAppMessageResponse(responseBody)) {
-    throw new Error('Resposta inválida da Meta Graph API.')
+    throw new Error('Respuesta inválida de la Meta Graph API.')
   }
 
   return responseBody
