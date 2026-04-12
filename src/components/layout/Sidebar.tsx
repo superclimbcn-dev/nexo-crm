@@ -36,8 +36,8 @@ const navItems: NavItem[] = [
 ]
 
 const bottomNavItems: NavItem[] = [
-  { label: 'Configuración', href: '/settings', icon: Settings },
-  { label: 'Ayuda', href: '/help', icon: HelpCircle },
+  { label: 'Configuración', href: '/templates', icon: Settings },
+  { label: 'Ayuda', href: '/dashboard', icon: HelpCircle },
 ]
 
 export function Sidebar() {
