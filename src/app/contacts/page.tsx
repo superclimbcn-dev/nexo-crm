@@ -1,189 +1,237 @@
-﻿'use client'
-
-import { useState } from 'react'
-import { MainLayout } from '@/components/layout/MainLayout'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
+import { Prisma } from '@prisma/client'
 import {
-  Search,
-  Plus,
+  Download,
   Filter,
   MoreVertical,
   Phone,
-  Mail,
-  Tag,
+  Plus,
+  Search,
   Upload,
-  Download,
 } from 'lucide-react'
+import { MainLayout } from '@/components/layout/MainLayout'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { prisma } from '@/lib/prisma'
 import { formatRelativeTime } from '@/lib/utils'
 
-const mockContacts = [
-  {
-    id: '1',
-    name: 'Ana Paula Mendes',
-    avatar: null,
-    phone: '5511999999999',
-    email: 'ana@nexo.com',
-    company: 'TechCorp',
-    source: 'Sitio web',
-    tags: [{ name: 'VIP', color: '#f59e0b' }, { name: 'Cliente', color: '#10b981' }],
-    lastContact: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+const contactsQuery = Prisma.validator<Prisma.ContactFindManyArgs>()({
+  include: {
+    tags: {
+      select: {
+        id: true,
+        name: true,
+        color: true,
+      },
+    },
+    conversations: {
+      orderBy: {
+        lastMessageAt: 'desc',
+      },
+      select: {
+        id: true,
+        lastMessageAt: true,
+      },
+    },
   },
-  {
-    id: '2',
-    name: 'Bruno Costa',
-    avatar: null,
-    phone: '5511888888888',
-    email: 'bruno@startup.com',
-    company: 'StartupXYZ',
-    source: 'Indicación',
-    tags: [{ name: 'Nuevo', color: '#3b82f6' }],
-    lastContact: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  orderBy: {
+    updatedAt: 'desc',
   },
-  {
-    id: '3',
-    name: 'Carla Souza',
-    avatar: null,
-    phone: '5511777777777',
-    email: 'carla@global.com',
-    company: 'Global Inc',
-    source: 'LinkedIn',
-    tags: [{ name: 'Prospect', color: '#8b5cf6' }],
-    lastContact: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: '4',
-    name: 'Daniel Lima',
-    avatar: null,
-    phone: '5511666666666',
-    email: 'daniel@fast.com',
-    company: 'Fast Solutions',
-    source: 'Google Ads',
-    tags: [{ name: 'Cliente', color: '#10b981' }],
-    lastContact: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-]
+})
 
-export default function ContactsPage() {
-  const [searchQuery, setSearchQuery] = useState('')
+type ContactListItem = Prisma.ContactGetPayload<typeof contactsQuery>
 
-  const filteredContacts = mockContacts.filter(
-    (contact) =>
-      contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.phone.includes(searchQuery) ||
-      contact.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+function getSearchValue(searchParams?: { q?: string }): string {
+  return searchParams?.q?.trim() ?? ''
+}
+
+function getContactInitials(contact: ContactListItem): string {
+  const name = contact.name?.trim()
+
+  if (!name) {
+    return 'SC'
+  }
+
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
+function getContactDisplayName(contact: ContactListItem): string {
+  return contact.name?.trim() || 'Cliente sin nombre'
+}
+
+function getContactLink(contact: ContactListItem): string {
+  return contact.conversations[0]?.id
+    ? `/conversations/${contact.conversations[0].id}`
+    : `/conversations/new?contactId=${contact.id}`
+}
+
+export default async function ContactsPage({
+  searchParams,
+}: {
+  searchParams?: { q?: string }
+}) {
+  const searchValue = getSearchValue(searchParams)
+
+  const contacts = await prisma.contact.findMany({
+    ...contactsQuery,
+    where: searchValue
+      ? {
+          OR: [
+            {
+              name: {
+                contains: searchValue,
+                mode: 'insensitive',
+              },
+            },
+            {
+              phoneNumber: {
+                contains: searchValue,
+              },
+            },
+          ],
+        }
+      : undefined,
+  })
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Contactos</h1>
-            <p className="text-muted-foreground">Gestiona tus contactos y leads</p>
+            <p className="text-muted-foreground">Gestiona tus contactos y leads reales</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
-              <Upload className="w-4 h-4 mr-2" />
+            <Button disabled variant="outline">
+              <Upload className="mr-2 h-4 w-4" />
               Importar
             </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
+            <Button disabled variant="outline">
+              <Download className="mr-2 h-4 w-4" />
               Exportar
             </Button>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
+            <Button disabled>
+              <Plus className="mr-2 h-4 w-4" />
               Nuevo Contacto
             </Button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <form className="flex gap-4" method="get">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre, teléfono o email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
+              defaultValue={searchValue}
+              name="q"
+              placeholder="Buscar por nombre o teléfono..."
             />
           </div>
-          <Button variant="outline">
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros
+          <Button type="submit" variant="outline">
+            <Filter className="mr-2 h-4 w-4" />
+            Filtrar
           </Button>
-        </div>
+        </form>
 
-        {/* Contacts Table */}
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-secondary/50">
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Contacto</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Teléfono</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Empresa</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Origen</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Etiquetas</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Último Contacto</th>
-                <th className="text-right p-4 text-sm font-medium text-muted-foreground">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredContacts.map((contact) => (
-                <tr key={contact.id} className="border-b border-border hover:bg-secondary/50">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={contact.avatar || ''} />
-                        <AvatarFallback className="bg-primary/20 text-primary">
-                          {contact.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{contact.name}</p>
-                        <p className="text-sm text-muted-foreground">{contact.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{contact.phone}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm">{contact.company}</td>
-                  <td className="p-4">
-                    <Badge variant="outline">{contact.source}</Badge>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex gap-1">
-                      {contact.tags.map((tag) => (
-                        <span
-                          key={tag.name}
-                          className="px-2 py-0.5 text-xs rounded-full"
-                          style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                        >
-                          {tag.name}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-muted-foreground">
-                    {formatRelativeTime(contact.lastContact)}
-                  </td>
-                  <td className="p-4 text-right">
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </td>
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
+          {contacts.length > 0 ? (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-secondary/50">
+                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Contacto</th>
+                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Teléfono</th>
+                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Empresa</th>
+                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Origen</th>
+                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Etiquetas</th>
+                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Último Contacto</th>
+                  <th className="p-4 text-right text-sm font-medium text-muted-foreground">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {contacts.map((contact) => {
+                  const lastConversationAt = contact.conversations[0]?.lastMessageAt ?? contact.updatedAt
+
+                  return (
+                    <tr key={contact.id} className="border-b border-border hover:bg-secondary/50">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={contact.avatar || ''} />
+                            <AvatarFallback className="bg-primary/20 text-primary">
+                              {getContactInitials(contact)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <Link
+                              className="font-medium transition-colors hover:text-primary"
+                              href={getContactLink(contact)}
+                            >
+                              {getContactDisplayName(contact)}
+                            </Link>
+                            <p className="text-sm text-muted-foreground">
+                              {contact.email || 'Sin email'}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{contact.phoneNumber}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm">{contact.company || 'Sin empresa'}</td>
+                      <td className="p-4">
+                        <Badge variant="outline">{contact.source || 'Sin origen'}</Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-1">
+                          {contact.tags.length > 0 ? (
+                            contact.tags.map((tag) => (
+                              <span
+                                key={tag.id}
+                                className="rounded-full px-2 py-0.5 text-xs"
+                                style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                              >
+                                {tag.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Sin etiquetas</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">
+                        {formatRelativeTime(lastConversationAt)}
+                      </td>
+                      <td className="p-4 text-right">
+                        <Link href={getContactLink(contact)}>
+                          <Button size="icon" variant="ghost">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+              <h2 className="text-lg font-semibold">Sin contactos</h2>
+              <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                Todavía no hay contactos en la base de datos o la búsqueda actual no devolvió
+                resultados.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

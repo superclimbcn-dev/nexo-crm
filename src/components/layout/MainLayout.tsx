@@ -1,10 +1,11 @@
 'use client'
 
+import { ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 
 interface MainLayoutProps {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export function MainLayout({ children }: MainLayoutProps) {

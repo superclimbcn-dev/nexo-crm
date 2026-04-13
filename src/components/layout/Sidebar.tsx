@@ -16,7 +16,7 @@ import {
   ChevronRight,
   MessageSquare,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface NavItem {
   label: string
@@ -25,8 +25,7 @@ interface NavItem {
   badge?: number
 }
 
-const navItems: NavItem[] = [
-  { label: 'Bandeja de entrada', href: '/inbox', icon: Inbox, badge: 12 },
+const baseNavItems: NavItem[] = [
   { label: 'Contactos', href: '/contacts', icon: Users },
   { label: 'CRM / Pipeline', href: '/crm', icon: BarChart3 },
   { label: 'Campañas', href: '/campaigns', icon: Megaphone },
@@ -36,13 +35,58 @@ const navItems: NavItem[] = [
 ]
 
 const bottomNavItems: NavItem[] = [
-  { label: 'Configuración', href: '/templates', icon: Settings },
-  { label: 'Ayuda', href: '/dashboard', icon: HelpCircle },
+  { label: 'Configuración', href: '/settings', icon: Settings },
+  { label: 'Ayuda', href: '/help', icon: HelpCircle },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [openConversationsCount, setOpenConversationsCount] = useState<number>(0)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadSidebarStats() {
+      try {
+        const response = await fetch('/api/sidebar/stats', { cache: 'no-store' })
+
+        if (!response.ok) {
+          return
+        }
+
+        const data: unknown = await response.json()
+
+        if (
+          typeof data === 'object' &&
+          data !== null &&
+          'openConversationsCount' in data &&
+          typeof data.openConversationsCount === 'number' &&
+          isMounted
+        ) {
+          setOpenConversationsCount(data.openConversationsCount)
+        }
+      } catch (error) {
+        console.error('No se pudieron cargar las estadísticas del sidebar.', error)
+      }
+    }
+
+    void loadSidebarStats()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const navItems: NavItem[] = [
+    {
+      label: 'Bandeja de entrada',
+      href: '/inbox',
+      icon: Inbox,
+      badge: openConversationsCount,
+    },
+    ...baseNavItems,
+  ]
 
   return (
     <aside
