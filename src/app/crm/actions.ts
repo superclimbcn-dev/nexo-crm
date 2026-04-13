@@ -1,8 +1,9 @@
-'use server'
+﻿'use server'
 
 import { DealStage } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { PROJECT_CURRENCY } from '@/lib/pricing/sabadell'
 import { prisma } from '@/lib/prisma'
 
 function parseRequiredString(value: FormDataEntryValue | null, fieldName: string): string {
@@ -100,6 +101,7 @@ export async function createDealAction(formData: FormData): Promise<void> {
       contactId,
       title,
       value,
+      currency: PROJECT_CURRENCY,
       stage,
       probability,
       expectedClose,

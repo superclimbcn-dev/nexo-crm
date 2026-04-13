@@ -1,10 +1,11 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { DealStage, DealStatus, Prisma } from '@prisma/client'
 import {
   ArrowRight,
   Calendar,
   DollarSign,
   Filter,
+  MapPinned,
   MessageSquare,
   Phone,
   Plus,
@@ -17,6 +18,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  getPricingBadgeLabel,
+  getPricingEstimateForPotential,
+  PROJECT_CURRENCY,
+} from '@/lib/pricing/sabadell'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency } from '@/lib/utils'
 
@@ -87,10 +93,6 @@ function getContactInitials(name: string): string {
   )
 }
 
-function getDealCurrency(deals: PipelineDeal[]): string {
-  return deals.find((deal) => deal.currency)?.currency ?? 'BRL'
-}
-
 function isWonDeal(deal: PipelineDeal): boolean {
   return deal.status === 'WON' || deal.stage === 'CLOSED_WON'
 }
@@ -130,29 +132,26 @@ function getServicePotential(deal: PipelineDeal): ServicePotential {
   }
 }
 
-function getEstimatedValueByService(service: ServicePotential): number {
-  switch (service) {
-    case 'sofas_alfombras':
-      return 150
-    case 'impermeabilizacion':
-      return 300
-    case 'carros':
-      return 250
-    default:
-      return 200
-  }
-}
-
 function getEffectiveDealValue(deal: PipelineDeal): number {
   if (deal.value !== null) {
     return Number(deal.value)
   }
 
-  return getEstimatedValueByService(getServicePotential(deal))
+  const pricingEstimate = getPricingEstimateForPotential(
+    getServicePotential(deal),
+    deal.contact.customFields,
+  )
+
+  return pricingEstimate.totalPrice
 }
 
 function isEstimatedDealValue(deal: PipelineDeal): boolean {
   return deal.value === null
+}
+
+function getTravelSurcharge(deal: PipelineDeal): number {
+  return getPricingEstimateForPotential(getServicePotential(deal), deal.contact.customFields)
+    .travelSurcharge
 }
 
 function getPipelineMetrics(deals: PipelineDeal[]): PipelineMetrics {
@@ -202,19 +201,6 @@ function getProbabilityTone(probability: number): string {
   return 'text-sky-500'
 }
 
-function getServiceBadgeLabel(service: ServicePotential): string {
-  switch (service) {
-    case 'sofas_alfombras':
-      return 'Sofás/Alfombras'
-    case 'impermeabilizacion':
-      return 'Impermeabilización'
-    case 'carros':
-      return 'Carros'
-    default:
-      return 'General'
-  }
-}
-
 export default async function CRMPage({
   searchParams,
 }: {
@@ -238,7 +224,6 @@ export default async function CRMPage({
       })
     : allDeals
 
-  const currency = getDealCurrency(allDeals)
   const metrics = getPipelineMetrics(allDeals)
 
   return (
@@ -248,7 +233,7 @@ export default async function CRMPage({
           <div>
             <h1 className="text-2xl font-bold">Pipeline de Ventas</h1>
             <p className="text-muted-foreground">
-              Visualiza oportunidades reales, métricas financieras y accesos directos al cliente
+              Visualiza oportunidades reales, métricas financieras y accesos directos al cliente.
             </p>
           </div>
 
@@ -279,7 +264,7 @@ export default async function CRMPage({
           <div className="rounded-lg border border-border bg-card p-4">
             <p className="text-sm text-muted-foreground">Total atrapado en el embudo</p>
             <p className="text-2xl font-bold">
-              {formatCurrency(metrics.totalPipelineValue, currency)}
+              {formatCurrency(metrics.totalPipelineValue, PROJECT_CURRENCY)}
             </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-4">
@@ -295,7 +280,7 @@ export default async function CRMPage({
           <div className="rounded-lg border border-border bg-card p-4">
             <p className="text-sm text-muted-foreground">Ganado este mes</p>
             <p className="text-2xl font-bold text-emerald-500">
-              {formatCurrency(metrics.wonThisMonth, currency)}
+              {formatCurrency(metrics.wonThisMonth, PROJECT_CURRENCY)}
             </p>
           </div>
         </div>
@@ -314,7 +299,7 @@ export default async function CRMPage({
                     <Badge variant="secondary">{stageDeals.length}</Badge>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {formatCurrency(stageTotal, currency)}
+                    {formatCurrency(stageTotal, PROJECT_CURRENCY)}
                   </span>
                 </div>
 
@@ -322,6 +307,7 @@ export default async function CRMPage({
                   {stageDeals.length > 0 ? (
                     stageDeals.map((deal) => {
                       const contactName = getContactDisplayName(deal)
+                      const travelSurcharge = getTravelSurcharge(deal)
 
                       return (
                         <Link
@@ -333,7 +319,7 @@ export default async function CRMPage({
                             <div>
                               <h3 className="text-sm font-medium">{deal.title}</h3>
                               <p className="mt-1 text-xs text-muted-foreground">
-                                Haz clic para abrir la conversación o el cliente relacionado
+                                Haz clic para abrir la conversación o el cliente relacionado.
                               </p>
                             </div>
                             <ArrowRight className="mt-0.5 h-4 w-4 text-muted-foreground" />
@@ -353,7 +339,7 @@ export default async function CRMPage({
                             <div className="flex items-center gap-1 text-emerald-500">
                               <DollarSign className="h-4 w-4" />
                               <span className="font-medium">
-                                {formatCurrency(getEffectiveDealValue(deal), deal.currency)}
+                                {formatCurrency(getEffectiveDealValue(deal), PROJECT_CURRENCY)}
                               </span>
                             </div>
                             <Badge className={getProbabilityTone(deal.probability)} variant="outline">
@@ -364,7 +350,7 @@ export default async function CRMPage({
                           <div className="mt-3 space-y-2 text-xs text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary">
-                                {getServiceBadgeLabel(getServicePotential(deal))}
+                                {getPricingBadgeLabel(getServicePotential(deal))}
                               </Badge>
                               {isEstimatedDealValue(deal) ? (
                                 <span>Valor estimado automáticamente</span>
@@ -372,6 +358,12 @@ export default async function CRMPage({
                                 <span>Valor real cargado</span>
                               )}
                             </div>
+                            {travelSurcharge > 0 ? (
+                              <div className="flex items-center gap-2 text-amber-600">
+                                <MapPinned className="h-3.5 w-3.5" />
+                                <span>Desplazamiento +20€ por estar a más de 30 km</span>
+                              </div>
+                            ) : null}
                             <div className="flex items-center gap-2">
                               <Phone className="h-3.5 w-3.5" />
                               <span>{deal.contact.phoneNumber}</span>
@@ -447,7 +439,7 @@ export default async function CRMPage({
                   allDeals
                     .filter((deal) => deal.status === DealStatus.WON || deal.stage === 'CLOSED_WON')
                     .reduce((sum, deal) => sum + getEffectiveDealValue(deal), 0),
-                  currency,
+                  PROJECT_CURRENCY,
                 )}
               </p>
             </div>

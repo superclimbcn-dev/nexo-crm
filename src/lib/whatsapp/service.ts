@@ -1,6 +1,10 @@
-import crypto from 'crypto'
+﻿import crypto from 'crypto'
 import { MessageStatus, MessageType, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import {
+  getPricingEstimateForService,
+  SABADELL_LOCATION,
+} from '@/lib/pricing/sabadell'
 
 export type TriageStatus =
   | 'new'
@@ -14,10 +18,7 @@ export type TriageStatus =
 
 export type MenuOption = '1' | '2' | '3'
 
-export type ServiceInterest =
-  | 'sofas_alfombras'
-  | 'impermeabilizacion'
-  | 'carros'
+export type ServiceInterest = 'sofas_alfombras' | 'impermeabilizacion' | 'carros'
 
 export type SupportedMetaMessageType =
   | 'text'
@@ -194,8 +195,6 @@ const PHOTO_REMINDER_MESSAGE =
 const PHOTO_CONFIRMATION_MESSAGE =
   '¡Perfecto! Ya recibimos tus fotos. Un asesor de Superclim revisará el material y te responderá en breve.'
 
-const FALLBACK_MESSAGE = 'Gracias por tu mensaje. En breve nos pondremos en contacto contigo.'
-
 const SERVICE_CONFIRMATION_MESSAGES: Record<ServiceInterest, string> = {
   sofas_alfombras:
     '¡Perfecto! Has elegido Sofás/Alfombras. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
@@ -293,6 +292,10 @@ function normalizeMetaMessageType(type: string): SupportedMetaMessageType {
 
 function isMenuOption(message: string): message is MenuOption {
   return message === '1' || message === '2' || message === '3'
+}
+
+function getMediaProxyUrl(mediaId: string): string {
+  return `/api/media/${mediaId}`
 }
 
 function getWhatsAppConfig(): { apiVersion: string; phoneNumberId: string; token: string } | null {
@@ -469,14 +472,13 @@ function mapMessageType(type: SupportedMetaMessageType): MessageType {
   return typeMap[type]
 }
 
-async function fetchMediaUrl(mediaId: string): Promise<{
-  mediaUrl: string | null
+async function fetchMediaMetadata(mediaId: string): Promise<{
   mediaType: string | null
 }> {
   const config = ensureWhatsAppConfig()
-  const mediaUrl = `https://graph.facebook.com/${config.apiVersion}/${mediaId}`
+  const metadataUrl = `https://graph.facebook.com/${config.apiVersion}/${mediaId}`
 
-  const response = await fetch(mediaUrl, {
+  const response = await fetch(metadataUrl, {
     headers: {
       Authorization: `Bearer ${config.token}`,
     },
@@ -486,13 +488,11 @@ async function fetchMediaUrl(mediaId: string): Promise<{
 
   if (!response.ok || !isMetaMediaLookupResponse(responseBody)) {
     return {
-      mediaUrl: null,
       mediaType: null,
     }
   }
 
   return {
-    mediaUrl: responseBody.url,
     mediaType: responseBody.mime_type ?? null,
   }
 }
@@ -510,32 +510,43 @@ async function extractContentFromMetaMessage(
         mediaType: null,
       }
     case 'image': {
-      const mediaAsset = message.image?.id ? await fetchMediaUrl(message.image.id) : null
+      const mediaAsset = message.image?.id ? await fetchMediaMetadata(message.image.id) : null
 
       return {
         body: normalizeMessage(message.image?.caption ?? ''),
-        mediaUrl: mediaAsset?.mediaUrl ?? message.image?.link ?? null,
+        mediaUrl: message.image?.id ? getMediaProxyUrl(message.image.id) : message.image?.link ?? null,
         mediaType: mediaAsset?.mediaType ?? message.image?.mime_type ?? 'image',
       }
     }
-    case 'document':
+    case 'document': {
+      const mediaAsset = message.document?.id ? await fetchMediaMetadata(message.document.id) : null
+
       return {
         body: normalizeMessage(message.document?.caption ?? ''),
-        mediaUrl: message.document?.link ?? null,
-        mediaType: message.document?.mime_type ?? 'document',
+        mediaUrl: message.document?.id
+          ? getMediaProxyUrl(message.document.id)
+          : message.document?.link ?? null,
+        mediaType: mediaAsset?.mediaType ?? message.document?.mime_type ?? 'document',
       }
-    case 'audio':
+    }
+    case 'audio': {
+      const mediaAsset = message.audio?.id ? await fetchMediaMetadata(message.audio.id) : null
+
       return {
         body: '(Audio)',
-        mediaUrl: message.audio?.link ?? null,
-        mediaType: message.audio?.mime_type ?? 'audio',
+        mediaUrl: message.audio?.id ? getMediaProxyUrl(message.audio.id) : message.audio?.link ?? null,
+        mediaType: mediaAsset?.mediaType ?? message.audio?.mime_type ?? 'audio',
       }
-    case 'video':
+    }
+    case 'video': {
+      const mediaAsset = message.video?.id ? await fetchMediaMetadata(message.video.id) : null
+
       return {
         body: normalizeMessage(message.video?.caption ?? ''),
-        mediaUrl: message.video?.link ?? null,
-        mediaType: message.video?.mime_type ?? 'video',
+        mediaUrl: message.video?.id ? getMediaProxyUrl(message.video.id) : message.video?.link ?? null,
+        mediaType: mediaAsset?.mediaType ?? message.video?.mime_type ?? 'video',
       }
+    }
     default:
       return {
         body: '(Mensaje no compatible)',
@@ -607,7 +618,22 @@ function getCustomFieldsWithTriageUpdate(params: {
     : {}
 
   if (params.selectedService) {
+    const pricingEstimate = getPricingEstimateForService(
+      params.selectedService,
+      params.currentCustomFields,
+    )
+
     nextCustomFields.triageService = params.selectedService
+    nextCustomFields.pricingLocation = SABADELL_LOCATION
+    nextCustomFields.estimatedBasePriceEur = pricingEstimate.basePrice
+    nextCustomFields.travelSurchargeEur = pricingEstimate.travelSurcharge
+    nextCustomFields.estimatedPipelineValueEur = pricingEstimate.totalPrice
+    nextCustomFields.currency = 'EUR'
+    nextCustomFields.requiresTravelSurcharge = pricingEstimate.travelSurcharge > 0
+
+    if (pricingEstimate.distanceKm !== null) {
+      nextCustomFields.distanceKm = pricingEstimate.distanceKm
+    }
   }
 
   if (params.triageCompletedAt) {
@@ -688,6 +714,8 @@ async function findOrCreateContact(params: {
       status: 'waiting_reply',
       customFields: {
         triageService: null,
+        pricingLocation: SABADELL_LOCATION,
+        currency: 'EUR',
       },
     },
     select: {
@@ -806,7 +834,6 @@ async function updateContactWorkflow(params: {
 }
 
 async function decideReply(params: {
-  requestId: string
   contact: ContactRecord
   payload: WhatsAppPayload
 }): Promise<TriageDecision> {
@@ -846,20 +873,22 @@ async function decideReply(params: {
         }
       }
 
-      const selectedService = SERVICE_BY_MENU_OPTION[params.payload.body]
+      {
+        const selectedService = SERVICE_BY_MENU_OPTION[params.payload.body]
 
-      await updateContactWorkflow({
-        contactId: params.contact.id,
-        currentCustomFields: params.contact.customFields,
-        nextStatus: 'AWAITING_PHOTOS',
-        selectedService,
-      })
+        await updateContactWorkflow({
+          contactId: params.contact.id,
+          currentCustomFields: params.contact.customFields,
+          nextStatus: 'AWAITING_PHOTOS',
+          selectedService,
+        })
 
-      return {
-        nextStatus: 'AWAITING_PHOTOS',
-        replyMessage: SERVICE_CONFIRMATION_MESSAGES[selectedService],
-        actionLabel: `Servicio ${selectedService} seleccionado y solicitud de fotos enviada`,
-        selectedService,
+        return {
+          nextStatus: 'AWAITING_PHOTOS',
+          replyMessage: SERVICE_CONFIRMATION_MESSAGES[selectedService],
+          actionLabel: `Servicio ${selectedService} seleccionado y solicitud de fotos enviada`,
+          selectedService,
+        }
       }
     case 'AWAITING_PHOTOS':
       if (params.payload.messageType === 'image' && params.payload.mediaUrl) {
@@ -884,7 +913,7 @@ async function decideReply(params: {
         replyMessage: PHOTO_REMINDER_MESSAGE,
         actionLabel:
           params.payload.messageType === 'image'
-            ? 'Imagen sin URL temporal, se solicitaron nuevas fotos'
+            ? 'Imagen sin URL local disponible, se solicitaron nuevas fotos'
             : 'Recordatorio de envío de fotos',
         selectedService: resolvedState.selectedService,
       }
@@ -1077,7 +1106,6 @@ async function handleIncomingMessage(payload: WhatsAppPayload): Promise<HandleIn
   }
 
   const decision = await decideReply({
-    requestId,
     contact,
     payload,
   })

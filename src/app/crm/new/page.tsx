@@ -1,9 +1,10 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { DealStage, Prisma } from '@prisma/client'
 import { ArrowLeft, Briefcase, Save } from 'lucide-react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PROJECT_CURRENCY } from '@/lib/pricing/sabadell'
 import { prisma } from '@/lib/prisma'
 import { createDealAction } from '../actions'
 
@@ -99,9 +100,9 @@ export default async function NewDealPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="value">
-                  Valor (R$)
+                  Valor ({PROJECT_CURRENCY === 'EUR' ? '€' : PROJECT_CURRENCY})
                 </label>
-                <Input id="value" min="0" name="value" placeholder="1500.00" step="0.01" type="number" required />
+                <Input id="value" min="0" name="value" placeholder="265.00" step="0.01" type="number" required />
               </div>
 
               <div className="space-y-2">
