@@ -121,13 +121,21 @@ export default async function HomePage() {
               </p>
             </div>
 
-            <Link
-              href="/contacts"
-              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Ver todos los contactos
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/inbox"
+                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Ver conversaciones
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+              <Link
+                href="/contacts"
+                className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+              >
+                Ver todos los contactos
+              </Link>
+            </div>
           </div>
         </section>
 

@@ -1,407 +1,272 @@
-﻿'use client'
-
-import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
+import { Prisma } from '@prisma/client'
+import { Bot, Camera, ChevronRight, Inbox, MessageSquare, Phone } from 'lucide-react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import {
-  Search,
-  Phone,
-  Paperclip,
-  Send,
-  Smile,
-  MoreVertical,
-  Check,
-  CheckCheck,
-  Clock,
-  Bot,
-  User,
-  Tag,
-  FileText,
-} from 'lucide-react'
-import { formatRelativeTime, cn } from '@/lib/utils'
+import { prisma } from '@/lib/prisma'
+import { formatRelativeTime } from '@/lib/utils'
 
-// Mock data for demo
-const mockConversations = [
-  {
-    id: '1',
+const inboxQuery = Prisma.validator<Prisma.ConversationFindManyArgs>()({
+  orderBy: {
+    lastMessageAt: 'desc',
+  },
+  include: {
     contact: {
-      id: 'c1',
-      name: 'Ana Paula Mendes',
-      phone: '5511999999999',
-      avatar: null,
+      select: {
+        id: true,
+        name: true,
+        phoneNumber: true,
+        avatar: true,
+        status: true,
+      },
     },
-    lastMessage: {
-      content: 'Gracias. Voy a revisar la propuesta y responder pronto.',
-      createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-      status: 'READ',
-    },
-    unreadCount: 0,
-    status: 'OPEN',
-    aiEnabled: false,
-  },
-  {
-    id: '2',
-    contact: {
-      id: 'c2',
-      name: 'Bruno Costa',
-      phone: '5511888888888',
-      avatar: null,
-    },
-    lastMessage: {
-      content: '¿Cuál es el precio del plan Enterprise?',
-      createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      status: 'DELIVERED',
-    },
-    unreadCount: 2,
-    status: 'OPEN',
-    aiEnabled: true,
-  },
-  {
-    id: '3',
-    contact: {
-      id: 'c3',
-      name: 'Carla Souza',
-      phone: '5511777777777',
-      avatar: null,
-    },
-    lastMessage: {
-      content: '¿Podemos programar una llamada para mañana?',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-      status: 'READ',
-    },
-    unreadCount: 0,
-    status: 'PENDING',
-    aiEnabled: false,
-  },
-  {
-    id: '4',
-    contact: {
-      id: 'c4',
-      name: 'Daniel Lima',
-      phone: '5511666666666',
-      avatar: null,
-    },
-    lastMessage: {
-      content: 'Voy a enviar el contrato firmado hoy mismo.',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-      status: 'READ',
-    },
-    unreadCount: 0,
-    status: 'CLOSED',
-    aiEnabled: false,
-  },
-]
-
-const mockMessages = [
-  {
-    id: 'm1',
-    direction: 'INBOUND',
-    type: 'TEXT',
-    content: '¡Hola! Me gustaría saber más sobre sus planes.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-    status: 'READ',
-    aiGenerated: false,
-  },
-  {
-    id: 'm2',
-    direction: 'OUTBOUND',
-    type: 'TEXT',
-    content: 'Hola. Claro, con gusto te ayudo. Tenemos tres planes: Starter (R$ 99/mes), Pro (R$ 299/mes) y Enterprise (bajo consulta). ¿Cuál se adapta mejor a tus necesidades?',
-    createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
-    status: 'READ',
-    aiGenerated: true,
-  },
-  {
-    id: 'm3',
-    direction: 'INBOUND',
-    type: 'TEXT',
-      content: 'Interesante. ¿Cuál es el precio del plan Enterprise?',
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    status: 'READ',
-    aiGenerated: false,
-  },
-]
-
-export default function InboxPage() {
-  const [selectedConversation, setSelectedConversation] = useState<string | null>(null)
-  const [messageInput, setMessageInput] = useState('')
-  const [messages, setMessages] = useState(mockMessages)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return
-
-    const newMessage = {
-      id: `m${Date.now()}`,
-      direction: 'OUTBOUND',
-      type: 'TEXT',
-      content: messageInput,
-      createdAt: new Date().toISOString(),
-      status: 'SENT',
-      aiGenerated: false,
-    }
-
-    setMessages([...messages, newMessage])
-    setMessageInput('')
-
-    // Simulate AI response after 2 seconds
-    setTimeout(() => {
-      const aiResponse = {
-        id: `m${Date.now() + 1}`,
-        direction: 'OUTBOUND',
-        type: 'TEXT',
-        content: 'El plan Enterprise se personaliza según tus necesidades. Generalmente comienza en R$ 999/mes e incluye soporte prioritario, SLA garantizado y recursos avanzados. ¿Puedo programar una llamada con nuestro equipo comercial para revisar los detalles?',
-        createdAt: new Date().toISOString(),
-        status: 'SENT',
+    messages: {
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        direction: true,
+        content: true,
+        mediaUrl: true,
+        mediaType: true,
+        type: true,
+        createdAt: true,
+        status: true,
         aiGenerated: true,
-      }
-      setMessages((prev) => [...prev, aiResponse])
-    }, 2000)
+      },
+    },
+  },
+})
+
+type InboxConversation = Prisma.ConversationGetPayload<typeof inboxQuery>
+
+function getContactName(conversation: InboxConversation): string {
+  return conversation.contact.name?.trim() || 'Cliente sin nombre'
+}
+
+function getInitials(name: string): string {
+  const parts = name.split(' ').filter(Boolean)
+
+  if (parts.length === 0) {
+    return 'SC'
   }
 
-  const activeConversation = mockConversations.find((c) => c.id === selectedConversation)
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
+function getContactStatusLabel(status: string): string {
+  switch (status) {
+    case 'waiting_reply':
+      return 'Pendiente de triage'
+    case 'interesse_sofas_alfombras':
+      return 'Sofás y Alfombras'
+    case 'interesse_impermeabilizacion':
+      return 'Impermeabilización'
+    case 'interesse_carros':
+      return 'Carros'
+    case 'new':
+      return 'Nuevo'
+    default:
+      return status
+  }
+}
+
+function getPreviewText(conversation: InboxConversation): string {
+  const lastMessage = conversation.messages[0]
+
+  if (!lastMessage) {
+    return 'Sin mensajes todavía.'
+  }
+
+  if (lastMessage.content.trim()) {
+    return lastMessage.content
+  }
+
+  if (lastMessage.type === 'IMAGE' || lastMessage.mediaType === 'image') {
+    return 'Imagen enviada'
+  }
+
+  if (lastMessage.mediaUrl) {
+    return 'Archivo adjunto enviado'
+  }
+
+  return 'Mensaje sin contenido de texto'
+}
+
+function hasNewPhoto(conversation: InboxConversation): boolean {
+  const lastMessage = conversation.messages[0]
+
+  if (!lastMessage) {
+    return false
+  }
+
+  return Boolean(lastMessage.mediaUrl) && (lastMessage.type === 'IMAGE' || lastMessage.mediaType === 'image')
+}
+
+function getMediaCount(conversation: InboxConversation): number {
+  return conversation.messages.filter((message) => Boolean(message.mediaUrl)).length
+}
+
+function isPendingReview(conversation: InboxConversation): boolean {
+  const lastMessage = conversation.messages[0]
+
+  if (!lastMessage) {
+    return false
+  }
+
+  return lastMessage.direction === 'INBOUND'
+}
+
+export default async function InboxPage() {
+  const conversations = await prisma.conversation.findMany(inboxQuery)
 
   return (
     <MainLayout>
-      <div className="flex h-[calc(100vh-7rem)] -m-6">
-        {/* Conversations List */}
-        <div className="w-80 border-r border-border bg-card flex flex-col">
-          {/* Filters */}
-          <div className="p-4 border-b border-border space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar conversaciones..."
-                className="pl-10 bg-background"
-              />
+      <div className="space-y-6">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <Badge variant="outline" className="w-fit">
+                Operación de WhatsApp
+              </Badge>
+              <h1 className="text-3xl font-bold tracking-tight">Bandeja de Entrada</h1>
+              <p className="max-w-2xl text-sm text-muted-foreground">
+                Revisa conversaciones reales, detecta nuevas fotos para presupuesto y entra
+                directamente a la vista detallada de cada cliente.
+              </p>
             </div>
-            <div className="flex gap-2">
-              <Badge variant="default" className="cursor-pointer">Todas</Badge>
-              <Badge variant="outline" className="cursor-pointer">No leídas</Badge>
-              <Badge variant="outline" className="cursor-pointer">Mías</Badge>
-            </div>
+
+            <Link
+              href="/"
+              className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              Volver al Dashboard
+            </Link>
+          </div>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">Conversaciones activas</p>
+            <p className="mt-2 text-3xl font-bold">{conversations.length}</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">Pendientes de revisión</p>
+            <p className="mt-2 text-3xl font-bold">
+              {conversations.filter(isPendingReview).length}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <p className="text-sm text-muted-foreground">Conversaciones con fotos</p>
+            <p className="mt-2 text-3xl font-bold">
+              {conversations.filter((conversation) => getMediaCount(conversation) > 0).length}
+            </p>
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="border-b border-border px-6 py-4">
+            <h2 className="text-lg font-semibold">Chats recientes</h2>
+            <p className="text-sm text-muted-foreground">
+              Cada item abre la conversación completa con historial y galería de fotos.
+            </p>
           </div>
 
-          {/* Conversation Items */}
-          <div className="flex-1 overflow-y-auto">
-            {mockConversations.map((conversation) => (
-              <button
-                key={conversation.id}
-                onClick={() => setSelectedConversation(conversation.id)}
-                className={cn(
-                  'w-full p-4 flex items-start gap-3 hover:bg-secondary transition-colors border-b border-border text-left',
-                  selectedConversation === conversation.id && 'bg-secondary'
-                )}
-              >
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={conversation.contact.avatar || ''} />
-                  <AvatarFallback className="bg-primary/20 text-primary">
-                    {conversation.contact.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium truncate">{conversation.contact.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatRelativeTime(conversation.lastMessage.createdAt)}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {conversation.lastMessage.content}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    {conversation.aiEnabled && (
-                      <Bot className="w-3 h-3 text-primary" />
-                    )}
-                    {conversation.unreadCount > 0 && (
-                      <span className="px-1.5 py-0.5 text-xs bg-primary text-white rounded-full">
-                        {conversation.unreadCount}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+          <div className="divide-y divide-border">
+            {conversations.length > 0 ? (
+              conversations.map((conversation) => {
+                const contactName = getContactName(conversation)
+                const latestMessage = conversation.messages[0] ?? null
+                const mediaCount = getMediaCount(conversation)
 
-        {/* Chat Area */}
-        {selectedConversation && activeConversation ? (
-          <div className="flex-1 flex flex-col bg-background">
-            {/* Chat Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={activeConversation.contact.avatar || ''} />
-                  <AvatarFallback className="bg-primary/20 text-primary">
-                    {activeConversation.contact.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-medium">{activeConversation.contact.name}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {activeConversation.contact.phone}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon">
-                  <Phone className="w-5 h-5" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Tag className="w-5 h-5" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <FileText className="w-5 h-5" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    'flex',
-                    message.direction === 'OUTBOUND' ? 'justify-end' : 'justify-start'
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'max-w-[70%] rounded-lg px-4 py-2',
-                      message.direction === 'OUTBOUND'
-                        ? 'bg-primary text-white'
-                        : 'bg-card'
-                    )}
+                return (
+                  <Link
+                    key={conversation.id}
+                    href={`/conversations/${conversation.id}`}
+                    className="flex flex-col gap-4 px-6 py-5 transition-colors hover:bg-secondary/40 lg:flex-row lg:items-center lg:justify-between"
                   >
-                    <p>{message.content}</p>
-                    <div className="flex items-center justify-end gap-1 mt-1">
-                      <span className="text-xs opacity-70">
-                        {formatRelativeTime(message.createdAt)}
-                      </span>
-                      {message.direction === 'OUTBOUND' && (
-                        <>
-                          {message.status === 'SENT' && <Check className="w-3 h-3" />}
-                          {message.status === 'DELIVERED' && <CheckCheck className="w-3 h-3" />}
-                          {message.status === 'READ' && <CheckCheck className="w-3 h-3 text-blue-300" />}
-                          {message.aiGenerated && <Bot className="w-3 h-3 ml-1" />}
-                        </>
-                      )}
+                    <div className="flex min-w-0 items-start gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={conversation.contact.avatar || ''} />
+                        <AvatarFallback className="bg-primary/15 text-primary">
+                          {getInitials(contactName)}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="truncate text-base font-semibold">{contactName}</h3>
+                          <Badge variant="outline">
+                            {getContactStatusLabel(conversation.contact.status)}
+                          </Badge>
+                          {isPendingReview(conversation) ? (
+                            <Badge variant="secondary">Nuevo</Badge>
+                          ) : null}
+                          {hasNewPhoto(conversation) ? (
+                            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+                              Nueva foto
+                            </Badge>
+                          ) : null}
+                          {mediaCount > 0 ? (
+                            <Badge variant="secondary">Fotos: {mediaCount}</Badge>
+                          ) : null}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            <Phone className="h-4 w-4" />
+                            {conversation.contact.phoneNumber}
+                          </span>
+                          <span className="inline-flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4" />
+                            {conversation.messages.length} mensajes
+                          </span>
+                          {conversation.aiEnabled ? (
+                            <span className="inline-flex items-center gap-2">
+                              <Bot className="h-4 w-4" />
+                              IA activa
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="truncate text-sm text-muted-foreground">
+                          {getPreviewText(conversation)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
 
-            {/* Input Area */}
-            <div className="p-4 border-t border-border">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon">
-                  <Paperclip className="w-5 h-5" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Smile className="w-5 h-5" />
-                </Button>
-                <Input
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Escribe tu mensaje..."
-                  className="flex-1"
-                />
-                <Button onClick={handleSendMessage} size="icon">
-                  <Send className="w-5 h-5" />
-                </Button>
+                    <div className="flex items-center justify-between gap-4 pl-16 lg:pl-0">
+                      <div className="text-right text-sm text-muted-foreground">
+                        <p>{formatRelativeTime(conversation.lastMessageAt)}</p>
+                        {latestMessage ? (
+                          <p className="text-xs">
+                            {latestMessage.direction === 'INBOUND' ? 'Cliente' : 'Sistema / Bot'}
+                          </p>
+                        ) : null}
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </Link>
+                )
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+                <Inbox className="mb-3 h-10 w-10 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">Sin conversaciones todavía</h3>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                  Cuando lleguen mensajes desde WhatsApp, aparecerán aquí para entrar al detalle y
+                  revisar la galería de fotos del cliente.
+                </p>
               </div>
-            </div>
+            )}
           </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center bg-background">
-            <div className="text-center text-muted-foreground">
-              <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium">Selecciona una conversación</p>
-              <p className="text-sm">Elige una conversación para empezar</p>
-            </div>
-          </div>
-        )}
-
-        {/* Contact Panel */}
-        {selectedConversation && activeConversation && (
-          <div className="w-80 border-l border-border bg-card p-4">
-            <div className="text-center mb-6">
-              <Avatar className="w-20 h-20 mx-auto mb-3">
-                <AvatarImage src={activeConversation.contact.avatar || ''} />
-                <AvatarFallback className="bg-primary/20 text-primary text-2xl">
-                  {activeConversation.contact.name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <h3 className="font-semibold">{activeConversation.contact.name}</h3>
-              <p className="text-sm text-muted-foreground">{activeConversation.contact.phone}</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs text-muted-foreground uppercase">Estado en el Pipeline</label>
-                <select className="w-full mt-1 p-2 rounded-md bg-background border border-border text-sm">
-                  <option>Nuevo</option>
-                  <option>Calificado</option>
-                  <option>Propuesta</option>
-                  <option>Negociación</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground uppercase">Valor estimado</label>
-                <Input placeholder="R$ 0,00" className="mt-1" />
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground uppercase">Notas internas</label>
-                <textarea
-                  className="w-full mt-1 p-2 rounded-md bg-background border border-border text-sm min-h-[100px]"
-                  placeholder="Añade notas sobre este contacto..."
-                />
-              </div>
-
-              <div className="pt-4 border-t border-border">
-                <h4 className="text-sm font-medium mb-2">Acciones Rápidas</h4>
-                <div className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Clock className="w-4 h-4 mr-2" />
-                    Programar seguimiento
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Enviar propuesta
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <User className="w-4 h-4 mr-2" />
-                    Transferir
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        </section>
       </div>
     </MainLayout>
   )
 }
-
-import { MessageSquare } from 'lucide-react'
