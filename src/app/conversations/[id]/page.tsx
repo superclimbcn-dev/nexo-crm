@@ -3,21 +3,19 @@ import { notFound } from 'next/navigation'
 import { Prisma } from '@prisma/client'
 import {
   ArrowLeft,
-  Bot,
   Camera,
-  Check,
-  CheckCheck,
   Image as ImageIcon,
   MessageSquare,
   Phone,
-  User,
 } from 'lucide-react'
+import { ConversationPanel } from '@/components/chat/ConversationPanel'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn, formatDate, formatRelativeTime } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import { prisma } from '@/lib/prisma'
+import { sendConversationMessageAction } from './actions'
 
 const conversationInclude = Prisma.validator<Prisma.ConversationDefaultArgs>()({
   include: {
@@ -73,6 +71,12 @@ function getConversationStatusLabel(status: string): string {
   switch (status) {
     case 'waiting_reply':
       return 'Pendiente de triage'
+    case 'AWAITING_SERVICE_SELECTION':
+      return 'Esperando selección de servicio'
+    case 'AWAITING_PHOTOS':
+      return 'Esperando fotos'
+    case 'TRIAGE_COMPLETED':
+      return 'Triage completado'
     case 'interesse_sofas_alfombras':
       return 'Interés en Sofás y Alfombras'
     case 'interesse_impermeabilizacion':
@@ -84,22 +88,6 @@ function getConversationStatusLabel(status: string): string {
     default:
       return status
   }
-}
-
-function getMessageStatusIcon(message: MessageItem) {
-  if (message.direction !== 'OUTBOUND') {
-    return null
-  }
-
-  if (message.status === 'READ') {
-    return <CheckCheck className="h-3 w-3 text-sky-300" />
-  }
-
-  if (message.status === 'DELIVERED') {
-    return <CheckCheck className="h-3 w-3" />
-  }
-
-  return <Check className="h-3 w-3" />
 }
 
 function isImageMessage(message: MessageItem): boolean {
@@ -151,7 +139,9 @@ export default async function ConversationPage({
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-bold">{contactName}</h1>
-                  <Badge variant="outline">{getConversationStatusLabel(conversation.contact.status)}</Badge>
+                  <Badge variant="outline">
+                    {getConversationStatusLabel(conversation.contact.status)}
+                  </Badge>
                 </div>
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                   <span className="inline-flex items-center gap-2">
@@ -181,82 +171,12 @@ export default async function ConversationPage({
         </section>
 
         <div className="grid flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <div className="border-b border-border px-6 py-4">
-              <h2 className="text-lg font-semibold">Conversación</h2>
-              <p className="text-sm text-muted-foreground">
-                Historial completo para revisar el contexto antes de preparar el presupuesto.
-              </p>
-            </div>
-
-            <ScrollArea className="h-[calc(100vh-20rem)] px-6 py-6">
-              <div className="space-y-4">
-                {conversation.messages.map((message) => {
-                  const isOutbound = message.direction === 'OUTBOUND'
-
-                  return (
-                    <div
-                      key={message.id}
-                      className={cn('flex', isOutbound ? 'justify-end' : 'justify-start')}
-                    >
-                      <div
-                        className={cn(
-                          'max-w-[78%] rounded-2xl border px-4 py-3 shadow-sm',
-                          isOutbound
-                            ? 'border-primary/20 bg-primary text-primary-foreground'
-                            : 'border-border bg-background',
-                        )}
-                      >
-                        <div className="mb-2 flex items-center gap-2 text-xs opacity-80">
-                          {isOutbound ? (
-                            <Bot className="h-3.5 w-3.5" />
-                          ) : (
-                            <User className="h-3.5 w-3.5" />
-                          )}
-                          <span>{isOutbound ? 'Sistema / Bot' : contactName}</span>
-                        </div>
-
-                        {hasRenderableMedia(message) ? (
-                          <a
-                            href={message.mediaUrl ?? '#'}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mb-3 block overflow-hidden rounded-xl border border-black/10 bg-white/10"
-                          >
-                            {isImageMessage(message) ? (
-                              <img
-                                alt={`Imagen enviada por ${contactName}`}
-                                className="max-h-80 w-full object-cover"
-                                src={message.mediaUrl ?? ''}
-                              />
-                            ) : (
-                              <div className="flex items-center gap-3 p-4 text-sm">
-                                <ImageIcon className="h-5 w-5" />
-                                <span>Abrir archivo adjunto</span>
-                              </div>
-                            )}
-                          </a>
-                        ) : null}
-
-                        {message.content ? (
-                          <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
-                        ) : (
-                          <p className="text-sm italic opacity-80">Sin texto adicional.</p>
-                        )}
-
-                        <div className="mt-3 flex items-center justify-end gap-2 text-[11px] opacity-80">
-                          <span title={formatDate(message.createdAt)}>
-                            {formatRelativeTime(message.createdAt)}
-                          </span>
-                          {getMessageStatusIcon(message)}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </ScrollArea>
-          </section>
+          <ConversationPanel
+            contactName={contactName}
+            conversationId={conversation.id}
+            messages={conversation.messages}
+            onSendMessage={sendConversationMessageAction}
+          />
 
           <aside className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <div className="border-b border-border px-6 py-4">
@@ -290,7 +210,7 @@ export default async function ConversationPage({
                       )}
                       <div className="space-y-1 p-3">
                         <p className="text-xs font-medium">
-                          {message.direction === 'INBOUND' ? 'Cliente' : 'Sistema / Bot'}
+                          {message.direction === 'INBOUND' ? 'Cliente' : 'Asesor / Sistema'}
                         </p>
                         <p className="text-[11px] text-muted-foreground">
                           {formatDate(message.createdAt)}

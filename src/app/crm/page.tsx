@@ -28,6 +28,8 @@ const pipelineQuery = Prisma.validator<Prisma.DealFindManyArgs>()({
         name: true,
         avatar: true,
         phoneNumber: true,
+        status: true,
+        customFields: true,
       },
     },
     conversation: {
@@ -44,6 +46,7 @@ const pipelineQuery = Prisma.validator<Prisma.DealFindManyArgs>()({
 })
 
 type PipelineDeal = Prisma.DealGetPayload<typeof pipelineQuery>
+type ServicePotential = 'sofas_alfombras' | 'impermeabilizacion' | 'carros' | 'general'
 
 type PipelineStageConfig = {
   id: DealStage
@@ -59,26 +62,10 @@ type PipelineMetrics = {
 }
 
 const visibleStages: PipelineStageConfig[] = [
-  {
-    id: 'NEW',
-    label: 'Nuevo',
-    colorClassName: 'bg-blue-500',
-  },
-  {
-    id: 'QUALIFIED',
-    label: 'Calificado',
-    colorClassName: 'bg-violet-500',
-  },
-  {
-    id: 'PROPOSAL',
-    label: 'Propuesta',
-    colorClassName: 'bg-amber-500',
-  },
-  {
-    id: 'NEGOTIATION',
-    label: 'Negociación',
-    colorClassName: 'bg-orange-500',
-  },
+  { id: 'NEW', label: 'Nuevo', colorClassName: 'bg-blue-500' },
+  { id: 'QUALIFIED', label: 'Calificado', colorClassName: 'bg-violet-500' },
+  { id: 'PROPOSAL', label: 'Propuesta', colorClassName: 'bg-amber-500' },
+  { id: 'NEGOTIATION', label: 'Negociación', colorClassName: 'bg-orange-500' },
 ]
 
 function getSearchValue(searchParams?: { q?: string }): string {
@@ -90,16 +77,14 @@ function getContactDisplayName(deal: PipelineDeal): string {
 }
 
 function getContactInitials(name: string): string {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((segment) => segment[0]?.toUpperCase() ?? '')
-    .join('') || 'SC'
-}
-
-function getDealValue(deal: PipelineDeal): number {
-  return Number(deal.value ?? 0)
+  return (
+    name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((segment) => segment[0]?.toUpperCase() ?? '')
+      .join('') || 'SC'
+  )
 }
 
 function getDealCurrency(deals: PipelineDeal[]): string {
@@ -114,17 +99,73 @@ function isLostDeal(deal: PipelineDeal): boolean {
   return deal.status === 'LOST' || deal.stage === 'CLOSED_LOST'
 }
 
+function isJsonObject(value: Prisma.JsonValue | null): value is Prisma.JsonObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function getServicePotential(deal: PipelineDeal): ServicePotential {
+  const customFields = deal.contact.customFields
+
+  if (isJsonObject(customFields)) {
+    const triageService = customFields.triageService
+
+    if (
+      triageService === 'sofas_alfombras' ||
+      triageService === 'impermeabilizacion' ||
+      triageService === 'carros'
+    ) {
+      return triageService
+    }
+  }
+
+  switch (deal.contact.status) {
+    case 'interesse_sofas_alfombras':
+      return 'sofas_alfombras'
+    case 'interesse_impermeabilizacion':
+      return 'impermeabilizacion'
+    case 'interesse_carros':
+      return 'carros'
+    default:
+      return 'general'
+  }
+}
+
+function getEstimatedValueByService(service: ServicePotential): number {
+  switch (service) {
+    case 'sofas_alfombras':
+      return 150
+    case 'impermeabilizacion':
+      return 300
+    case 'carros':
+      return 250
+    default:
+      return 200
+  }
+}
+
+function getEffectiveDealValue(deal: PipelineDeal): number {
+  if (deal.value !== null) {
+    return Number(deal.value)
+  }
+
+  return getEstimatedValueByService(getServicePotential(deal))
+}
+
+function isEstimatedDealValue(deal: PipelineDeal): boolean {
+  return deal.value === null
+}
+
 function getPipelineMetrics(deals: PipelineDeal[]): PipelineMetrics {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  const totalPipelineValue = deals.reduce((sum, deal) => sum + getDealValue(deal), 0)
+  const totalPipelineValue = deals.reduce((sum, deal) => sum + getEffectiveDealValue(deal), 0)
   const activeDeals = deals.filter((deal) => !isWonDeal(deal) && !isLostDeal(deal)).length
   const wonDeals = deals.filter(isWonDeal)
   const conversionRate = deals.length > 0 ? (wonDeals.length / deals.length) * 100 : 0
   const wonThisMonth = wonDeals.reduce((sum, deal) => {
     const referenceDate = deal.actualClose ?? deal.updatedAt
-    return referenceDate >= monthStart ? sum + getDealValue(deal) : sum
+    return referenceDate >= monthStart ? sum + getEffectiveDealValue(deal) : sum
   }, 0)
 
   return {
@@ -140,7 +181,7 @@ function getStageDeals(deals: PipelineDeal[], stage: DealStage): PipelineDeal[] 
 }
 
 function getStageTotal(deals: PipelineDeal[], stage: DealStage): number {
-  return getStageDeals(deals, stage).reduce((sum, deal) => sum + getDealValue(deal), 0)
+  return getStageDeals(deals, stage).reduce((sum, deal) => sum + getEffectiveDealValue(deal), 0)
 }
 
 function getDealLink(deal: PipelineDeal): string {
@@ -161,6 +202,19 @@ function getProbabilityTone(probability: number): string {
   return 'text-sky-500'
 }
 
+function getServiceBadgeLabel(service: ServicePotential): string {
+  switch (service) {
+    case 'sofas_alfombras':
+      return 'Sofás/Alfombras'
+    case 'impermeabilizacion':
+      return 'Impermeabilización'
+    case 'carros':
+      return 'Carros'
+    default:
+      return 'General'
+  }
+}
+
 export default async function CRMPage({
   searchParams,
 }: {
@@ -175,6 +229,7 @@ export default async function CRMPage({
         const dealTitle = deal.title.toLocaleLowerCase('es-ES')
         const contactName = getContactDisplayName(deal).toLocaleLowerCase('es-ES')
         const phoneNumber = deal.contact.phoneNumber
+
         return (
           dealTitle.includes(normalizedSearch) ||
           contactName.includes(normalizedSearch) ||
@@ -222,7 +277,7 @@ export default async function CRMPage({
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-sm text-muted-foreground">Total en Pipeline</p>
+            <p className="text-sm text-muted-foreground">Total atrapado en el embudo</p>
             <p className="text-2xl font-bold">
               {formatCurrency(metrics.totalPipelineValue, currency)}
             </p>
@@ -298,7 +353,7 @@ export default async function CRMPage({
                             <div className="flex items-center gap-1 text-emerald-500">
                               <DollarSign className="h-4 w-4" />
                               <span className="font-medium">
-                                {formatCurrency(getDealValue(deal), deal.currency)}
+                                {formatCurrency(getEffectiveDealValue(deal), deal.currency)}
                               </span>
                             </div>
                             <Badge className={getProbabilityTone(deal.probability)} variant="outline">
@@ -308,13 +363,25 @@ export default async function CRMPage({
 
                           <div className="mt-3 space-y-2 text-xs text-muted-foreground">
                             <div className="flex items-center gap-2">
+                              <Badge variant="secondary">
+                                {getServiceBadgeLabel(getServicePotential(deal))}
+                              </Badge>
+                              {isEstimatedDealValue(deal) ? (
+                                <span>Valor estimado automáticamente</span>
+                              ) : (
+                                <span>Valor real cargado</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
                               <Phone className="h-3.5 w-3.5" />
                               <span>{deal.contact.phoneNumber}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <UserCircle2 className="h-3.5 w-3.5" />
                               <span>
-                                {deal.conversationId ? 'Conversación vinculada' : 'Sin conversación todavía'}
+                                {deal.conversationId
+                                  ? 'Conversación vinculada'
+                                  : 'Sin conversación todavía'}
                               </span>
                             </div>
                             {deal.expectedClose ? (
@@ -356,13 +423,21 @@ export default async function CRMPage({
             <div className="rounded-lg border border-border p-4">
               <p className="text-sm text-muted-foreground">Deals ganados</p>
               <p className="mt-2 text-2xl font-bold">
-                {allDeals.filter((deal) => deal.status === DealStatus.WON || deal.stage === 'CLOSED_WON').length}
+                {
+                  allDeals.filter(
+                    (deal) => deal.status === DealStatus.WON || deal.stage === 'CLOSED_WON',
+                  ).length
+                }
               </p>
             </div>
             <div className="rounded-lg border border-border p-4">
               <p className="text-sm text-muted-foreground">Deals perdidos</p>
               <p className="mt-2 text-2xl font-bold">
-                {allDeals.filter((deal) => deal.status === DealStatus.LOST || deal.stage === 'CLOSED_LOST').length}
+                {
+                  allDeals.filter(
+                    (deal) => deal.status === DealStatus.LOST || deal.stage === 'CLOSED_LOST',
+                  ).length
+                }
               </p>
             </div>
             <div className="rounded-lg border border-border p-4">
@@ -371,8 +446,8 @@ export default async function CRMPage({
                 {formatCurrency(
                   allDeals
                     .filter((deal) => deal.status === DealStatus.WON || deal.stage === 'CLOSED_WON')
-                    .reduce((sum, deal) => sum + getDealValue(deal), 0),
-                  currency
+                    .reduce((sum, deal) => sum + getEffectiveDealValue(deal), 0),
+                  currency,
                 )}
               </p>
             </div>
