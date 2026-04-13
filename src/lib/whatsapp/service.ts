@@ -5,11 +5,20 @@ import { prisma } from '@/lib/prisma'
 export type TriageStatus =
   | 'new'
   | 'waiting_reply'
+  | 'AWAITING_SERVICE_SELECTION'
+  | 'AWAITING_PHOTOS'
+  | 'TRIAGE_COMPLETED'
   | 'interesse_sofas_alfombras'
   | 'interesse_impermeabilizacion'
   | 'interesse_carros'
 
 export type MenuOption = '1' | '2' | '3'
+
+export type ServiceInterest =
+  | 'sofas_alfombras'
+  | 'impermeabilizacion'
+  | 'carros'
+
 export type SupportedMetaMessageType =
   | 'text'
   | 'image'
@@ -44,19 +53,27 @@ export interface MetaIncomingMessageRecord {
     body?: string
   }
   image?: {
+    id?: string
     caption?: string
     link?: string
+    mime_type?: string
   }
   document?: {
+    id?: string
     caption?: string
     link?: string
+    mime_type?: string
   }
   audio?: {
+    id?: string
     link?: string
+    mime_type?: string
   }
   video?: {
+    id?: string
     caption?: string
     link?: string
+    mime_type?: string
   }
 }
 
@@ -95,15 +112,11 @@ interface ContactRecord {
   id: string
   phoneNumber: string
   status: string
+  customFields: Prisma.JsonValue | null
 }
 
 interface ConversationRecord {
   id: string
-}
-
-interface ServiceSelection {
-  nextStatus: Exclude<TriageStatus, 'new' | 'waiting_reply'>
-  confirmationMessage: string
 }
 
 interface SendWhatsAppMessageResponse {
@@ -131,7 +144,34 @@ interface LogContext {
   details?: Record<string, string | number | boolean | null | undefined>
 }
 
+interface TriageDecision {
+  nextStatus: TriageStatus | null
+  replyMessage: string | null
+  actionLabel: string
+  selectedService?: ServiceInterest | null
+}
+
+interface MetaMediaLookupResponse {
+  url: string
+  mime_type?: string
+}
+
+interface MediaExtractionResult {
+  body: string
+  mediaUrl: string | null
+  mediaType: string | null
+}
+
+interface ParsedTriageContext {
+  selectedService: ServiceInterest | null
+}
+
 type AutomationRecord = Awaited<ReturnType<typeof fetchActiveAutomations>>[number]
+type NormalizedTriageState =
+  | 'waiting_reply'
+  | 'AWAITING_SERVICE_SELECTION'
+  | 'AWAITING_PHOTOS'
+  | 'TRIAGE_COMPLETED'
 
 const WELCOME_MENU = [
   '¡Hola! Bienvenido a Superclim.',
@@ -141,25 +181,46 @@ const WELCOME_MENU = [
   '3. Carros',
 ].join('\n')
 
-const INVALID_OPTION_MESSAGE = 'Opción inválida. Por favor, elige 1, 2 o 3.'
+const INVALID_OPTION_MESSAGE = [
+  'No entendí tu elección.',
+  'Por favor, responde con 1, 2 o 3.',
+  '',
+  WELCOME_MENU,
+].join('\n')
+
+const PHOTO_REMINDER_MESSAGE =
+  'Para preparar el presupuesto necesitamos fotos del servicio. Por favor, envíalas por aquí.'
+
+const PHOTO_CONFIRMATION_MESSAGE =
+  '¡Perfecto! Ya recibimos tus fotos. Un asesor de Superclim revisará el material y te responderá en breve.'
+
 const FALLBACK_MESSAGE = 'Gracias por tu mensaje. En breve nos pondremos en contacto contigo.'
 
-const MENU_SELECTIONS: Record<MenuOption, ServiceSelection> = {
-  '1': {
-    nextStatus: 'interesse_sofas_alfombras',
-    confirmationMessage:
-      '¡Perfecto! Has elegido Sofás/Alfombras. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
-  },
-  '2': {
-    nextStatus: 'interesse_impermeabilizacion',
-    confirmationMessage:
-      '¡Perfecto! Has elegido Impermeabilización. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
-  },
-  '3': {
-    nextStatus: 'interesse_carros',
-    confirmationMessage:
-      '¡Perfecto! Has elegido Carros. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
-  },
+const SERVICE_CONFIRMATION_MESSAGES: Record<ServiceInterest, string> = {
+  sofas_alfombras:
+    '¡Perfecto! Has elegido Sofás/Alfombras. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
+  impermeabilizacion:
+    '¡Perfecto! Has elegido Impermeabilización. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
+  carros:
+    '¡Perfecto! Has elegido Carros. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
+}
+
+const SERVICE_BY_MENU_OPTION: Record<MenuOption, ServiceInterest> = {
+  '1': 'sofas_alfombras',
+  '2': 'impermeabilizacion',
+  '3': 'carros',
+}
+
+const LEGACY_STATUS_TO_SERVICE: Record<
+  Extract<
+    TriageStatus,
+    'interesse_sofas_alfombras' | 'interesse_impermeabilizacion' | 'interesse_carros'
+  >,
+  ServiceInterest
+> = {
+  interesse_sofas_alfombras: 'sofas_alfombras',
+  interesse_impermeabilizacion: 'impermeabilizacion',
+  interesse_carros: 'carros',
 }
 
 function logEvent(event: string, context: LogContext): void {
@@ -175,8 +236,36 @@ function logEvent(event: string, context: LogContext): void {
   )
 }
 
+function logClientAction(params: {
+  requestId: string
+  phoneNumber: string
+  status: string
+  action: string
+  messageSid: string
+}): void {
+  console.log(
+    `CLIENTE ${params.phoneNumber} - ESTADO ACTUAL: ${params.status} - ACCIÓN: ${params.action}`,
+  )
+
+  logEvent('Triage action', {
+    requestId: params.requestId,
+    phoneNumber: params.phoneNumber,
+    messageSid: params.messageSid,
+    status: params.status,
+    details: {
+      action: params.action,
+    },
+  })
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
+}
+
+function isJsonObject(
+  value: Prisma.JsonValue | Prisma.InputJsonValue | null | undefined,
+): value is Prisma.JsonObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function normalizePhoneNumber(phoneNumber: string): string {
@@ -204,10 +293,6 @@ function normalizeMetaMessageType(type: string): SupportedMetaMessageType {
 
 function isMenuOption(message: string): message is MenuOption {
   return message === '1' || message === '2' || message === '3'
-}
-
-function isAwaitingReply(status: string): boolean {
-  return status === 'new' || status === 'waiting_reply'
 }
 
 function getWhatsAppConfig(): { apiVersion: string; phoneNumberId: string; token: string } | null {
@@ -296,11 +381,13 @@ function isSendWhatsAppMessageResponse(value: unknown): value is SendWhatsAppMes
   const messagesAreValid =
     value.messages === undefined ||
     (Array.isArray(value.messages) &&
-      value.messages.every(
-        (message) => isObject(message) && typeof message.id === 'string',
-      ))
+      value.messages.every((message) => isObject(message) && typeof message.id === 'string'))
 
   return value.messaging_product === 'whatsapp' && contactsAreValid && messagesAreValid
+}
+
+function isMetaMediaLookupResponse(value: unknown): value is MetaMediaLookupResponse {
+  return isObject(value) && typeof value.url === 'string'
 }
 
 function validateSimpleWebhookPayload(payload: unknown): payload is SimpleWhatsAppWebhookPayload {
@@ -355,7 +442,6 @@ function validateMetaWebhookPayload(payload: unknown): payload is MetaWhatsAppWe
       }
 
       const { messages, statuses } = change.value
-
       const messagesAreValid =
         messages === undefined ||
         (Array.isArray(messages) && messages.every(isMetaIncomingMessageRecord))
@@ -383,11 +469,37 @@ function mapMessageType(type: SupportedMetaMessageType): MessageType {
   return typeMap[type]
 }
 
-function extractContentFromMetaMessage(message: MetaIncomingMessageRecord): {
-  body: string
+async function fetchMediaUrl(mediaId: string): Promise<{
   mediaUrl: string | null
   mediaType: string | null
-} {
+}> {
+  const config = ensureWhatsAppConfig()
+  const mediaUrl = `https://graph.facebook.com/${config.apiVersion}/${mediaId}`
+
+  const response = await fetch(mediaUrl, {
+    headers: {
+      Authorization: `Bearer ${config.token}`,
+    },
+  })
+
+  const responseBody: unknown = await response.json()
+
+  if (!response.ok || !isMetaMediaLookupResponse(responseBody)) {
+    return {
+      mediaUrl: null,
+      mediaType: null,
+    }
+  }
+
+  return {
+    mediaUrl: responseBody.url,
+    mediaType: responseBody.mime_type ?? null,
+  }
+}
+
+async function extractContentFromMetaMessage(
+  message: MetaIncomingMessageRecord,
+): Promise<MediaExtractionResult> {
   const normalizedType = normalizeMetaMessageType(message.type)
 
   switch (normalizedType) {
@@ -397,29 +509,32 @@ function extractContentFromMetaMessage(message: MetaIncomingMessageRecord): {
         mediaUrl: null,
         mediaType: null,
       }
-    case 'image':
+    case 'image': {
+      const mediaAsset = message.image?.id ? await fetchMediaUrl(message.image.id) : null
+
       return {
         body: normalizeMessage(message.image?.caption ?? ''),
-        mediaUrl: message.image?.link ?? null,
-        mediaType: 'image',
+        mediaUrl: mediaAsset?.mediaUrl ?? message.image?.link ?? null,
+        mediaType: mediaAsset?.mediaType ?? message.image?.mime_type ?? 'image',
       }
+    }
     case 'document':
       return {
         body: normalizeMessage(message.document?.caption ?? ''),
         mediaUrl: message.document?.link ?? null,
-        mediaType: 'document',
+        mediaType: message.document?.mime_type ?? 'document',
       }
     case 'audio':
       return {
         body: '(Audio)',
         mediaUrl: message.audio?.link ?? null,
-        mediaType: 'audio',
+        mediaType: message.audio?.mime_type ?? 'audio',
       }
     case 'video':
       return {
         body: normalizeMessage(message.video?.caption ?? ''),
         mediaUrl: message.video?.link ?? null,
-        mediaType: 'video',
+        mediaType: message.video?.mime_type ?? 'video',
       }
     default:
       return {
@@ -458,6 +573,90 @@ function mapStatusUpdate(status: MetaIncomingStatusRecord): {
   }
 }
 
+function getParsedTriageContext(customFields: Prisma.JsonValue | null): ParsedTriageContext {
+  if (!isJsonObject(customFields)) {
+    return {
+      selectedService: null,
+    }
+  }
+
+  const selectedService = customFields.triageService
+
+  if (
+    selectedService === 'sofas_alfombras' ||
+    selectedService === 'impermeabilizacion' ||
+    selectedService === 'carros'
+  ) {
+    return {
+      selectedService,
+    }
+  }
+
+  return {
+    selectedService: null,
+  }
+}
+
+function getCustomFieldsWithTriageUpdate(params: {
+  currentCustomFields: Prisma.JsonValue | null
+  selectedService?: ServiceInterest | null
+  triageCompletedAt?: string
+}): Prisma.InputJsonValue {
+  const nextCustomFields: Prisma.JsonObject = isJsonObject(params.currentCustomFields)
+    ? { ...params.currentCustomFields }
+    : {}
+
+  if (params.selectedService) {
+    nextCustomFields.triageService = params.selectedService
+  }
+
+  if (params.triageCompletedAt) {
+    nextCustomFields.triageCompletedAt = params.triageCompletedAt
+  }
+
+  return nextCustomFields
+}
+
+function resolveCurrentTriageState(contact: ContactRecord): {
+  currentStatus: NormalizedTriageState
+  selectedService: ServiceInterest | null
+  needsLegacyNormalization: boolean
+} {
+  const triageContext = getParsedTriageContext(contact.customFields)
+
+  switch (contact.status) {
+    case 'new':
+    case 'waiting_reply':
+      return {
+        currentStatus: 'waiting_reply',
+        selectedService: triageContext.selectedService,
+        needsLegacyNormalization: false,
+      }
+    case 'AWAITING_SERVICE_SELECTION':
+    case 'AWAITING_PHOTOS':
+    case 'TRIAGE_COMPLETED':
+      return {
+        currentStatus: contact.status,
+        selectedService: triageContext.selectedService,
+        needsLegacyNormalization: false,
+      }
+    case 'interesse_sofas_alfombras':
+    case 'interesse_impermeabilizacion':
+    case 'interesse_carros':
+      return {
+        currentStatus: 'AWAITING_PHOTOS',
+        selectedService: LEGACY_STATUS_TO_SERVICE[contact.status],
+        needsLegacyNormalization: true,
+      }
+    default:
+      return {
+        currentStatus: 'waiting_reply',
+        selectedService: triageContext.selectedService,
+        needsLegacyNormalization: false,
+      }
+  }
+}
+
 async function findOrCreateContact(params: {
   phoneNumber: string
   profileName?: string | null
@@ -470,6 +669,7 @@ async function findOrCreateContact(params: {
       id: true,
       phoneNumber: true,
       status: true,
+      customFields: true,
     },
   })
 
@@ -486,11 +686,15 @@ async function findOrCreateContact(params: {
       name: params.profileName ?? null,
       source: 'whatsapp',
       status: 'waiting_reply',
+      customFields: {
+        triageService: null,
+      },
     },
     select: {
       id: true,
       phoneNumber: true,
       status: true,
+      customFields: true,
     },
   })
 
@@ -581,63 +785,117 @@ async function persistOutboundMessage(params: {
   })
 }
 
-async function updateContactStatus(contactId: string, status: TriageStatus): Promise<void> {
+async function updateContactWorkflow(params: {
+  contactId: string
+  currentCustomFields: Prisma.JsonValue | null
+  nextStatus: TriageStatus
+  selectedService?: ServiceInterest | null
+  triageCompletedAt?: string
+}): Promise<void> {
   await prisma.contact.update({
-    where: { id: contactId },
-    data: { status },
+    where: { id: params.contactId },
+    data: {
+      status: params.nextStatus,
+      customFields: getCustomFieldsWithTriageUpdate({
+        currentCustomFields: params.currentCustomFields,
+        selectedService: params.selectedService,
+        triageCompletedAt: params.triageCompletedAt,
+      }),
+    },
   })
 }
 
 async function decideReply(params: {
   requestId: string
   contact: ContactRecord
-  isNewContact: boolean
   payload: WhatsAppPayload
-}): Promise<string | null> {
-  if (params.isNewContact) {
-    return WELCOME_MENU
+}): Promise<TriageDecision> {
+  const resolvedState = resolveCurrentTriageState(params.contact)
+
+  if (resolvedState.needsLegacyNormalization) {
+    await updateContactWorkflow({
+      contactId: params.contact.id,
+      currentCustomFields: params.contact.customFields,
+      nextStatus: 'AWAITING_PHOTOS',
+      selectedService: resolvedState.selectedService,
+    })
   }
 
-  if (params.payload.messageType !== 'text') {
-    return null
-  }
-
-  if (!isAwaitingReply(params.contact.status)) {
-    return FALLBACK_MESSAGE
-  }
-
-  if (!isMenuOption(params.payload.body)) {
-    if (params.contact.status !== 'waiting_reply') {
-      logEvent('Triage state transition', {
-        requestId: params.requestId,
-        phoneNumber: params.contact.phoneNumber,
-        messageSid: params.payload.messageSid,
-        status: 'waiting_reply',
-        details: {
-          oldStatus: params.contact.status,
-          newStatus: 'waiting_reply',
-        },
+  switch (resolvedState.currentStatus) {
+    case 'waiting_reply':
+      await updateContactWorkflow({
+        contactId: params.contact.id,
+        currentCustomFields: params.contact.customFields,
+        nextStatus: 'AWAITING_SERVICE_SELECTION',
+        selectedService: resolvedState.selectedService,
       })
-      await updateContactStatus(params.contact.id, 'waiting_reply')
-    }
 
-    return INVALID_OPTION_MESSAGE
+      return {
+        nextStatus: 'AWAITING_SERVICE_SELECTION',
+        replyMessage: WELCOME_MENU,
+        actionLabel: 'Menú inicial enviado',
+        selectedService: resolvedState.selectedService,
+      }
+    case 'AWAITING_SERVICE_SELECTION':
+      if (params.payload.messageType !== 'text' || !isMenuOption(params.payload.body)) {
+        return {
+          nextStatus: 'AWAITING_SERVICE_SELECTION',
+          replyMessage: INVALID_OPTION_MESSAGE,
+          actionLabel: 'Menú reenviado por opción inválida',
+          selectedService: resolvedState.selectedService,
+        }
+      }
+
+      const selectedService = SERVICE_BY_MENU_OPTION[params.payload.body]
+
+      await updateContactWorkflow({
+        contactId: params.contact.id,
+        currentCustomFields: params.contact.customFields,
+        nextStatus: 'AWAITING_PHOTOS',
+        selectedService,
+      })
+
+      return {
+        nextStatus: 'AWAITING_PHOTOS',
+        replyMessage: SERVICE_CONFIRMATION_MESSAGES[selectedService],
+        actionLabel: `Servicio ${selectedService} seleccionado y solicitud de fotos enviada`,
+        selectedService,
+      }
+    case 'AWAITING_PHOTOS':
+      if (params.payload.messageType === 'image' && params.payload.mediaUrl) {
+        await updateContactWorkflow({
+          contactId: params.contact.id,
+          currentCustomFields: params.contact.customFields,
+          nextStatus: 'TRIAGE_COMPLETED',
+          selectedService: resolvedState.selectedService,
+          triageCompletedAt: new Date().toISOString(),
+        })
+
+        return {
+          nextStatus: 'TRIAGE_COMPLETED',
+          replyMessage: PHOTO_CONFIRMATION_MESSAGE,
+          actionLabel: 'Fotos recibidas y triage completado',
+          selectedService: resolvedState.selectedService,
+        }
+      }
+
+      return {
+        nextStatus: 'AWAITING_PHOTOS',
+        replyMessage: PHOTO_REMINDER_MESSAGE,
+        actionLabel:
+          params.payload.messageType === 'image'
+            ? 'Imagen sin URL temporal, se solicitaron nuevas fotos'
+            : 'Recordatorio de envío de fotos',
+        selectedService: resolvedState.selectedService,
+      }
+    case 'TRIAGE_COMPLETED':
+      return {
+        nextStatus: 'TRIAGE_COMPLETED',
+        replyMessage: null,
+        actionLabel: 'Sin respuesta automática, triage ya completado',
+        selectedService: resolvedState.selectedService,
+      }
   }
-
-  const selection = MENU_SELECTIONS[params.payload.body]
-  logEvent('Triage state transition', {
-    requestId: params.requestId,
-    phoneNumber: params.contact.phoneNumber,
-    messageSid: params.payload.messageSid,
-    status: selection.nextStatus,
-    details: {
-      oldStatus: params.contact.status,
-      newStatus: selection.nextStatus,
-      selectedOption: params.payload.body,
-    },
-  })
-  await updateContactStatus(params.contact.id, selection.nextStatus)
-  return selection.confirmationMessage
 }
 
 async function fetchActiveAutomations() {
@@ -652,22 +910,13 @@ async function fetchActiveAutomations() {
 }
 
 function extractKeywords(triggerConfig: Prisma.JsonValue): string[] {
-  if (
-    typeof triggerConfig !== 'object' ||
-    triggerConfig === null ||
-    Array.isArray(triggerConfig) ||
-    !('keywords' in triggerConfig)
-  ) {
+  if (!isJsonObject(triggerConfig) || !Array.isArray(triggerConfig.keywords)) {
     return []
   }
 
-  const keywords = triggerConfig.keywords
-
-  if (!Array.isArray(keywords)) {
-    return []
-  }
-
-  return keywords.filter((keyword): keyword is string => typeof keyword === 'string')
+  return triggerConfig.keywords.filter(
+    (keyword): keyword is string => typeof keyword === 'string',
+  )
 }
 
 async function executeAutomation(
@@ -799,6 +1048,7 @@ async function handleIncomingMessage(payload: WhatsAppPayload): Promise<HandleIn
     phoneNumber: payload.phoneNumber,
     profileName: payload.profileName,
   })
+
   const conversation = await findOrCreateConversation(contact.id)
   const wasPersisted = await persistIncomingMessage({
     conversationId: conversation.id,
@@ -813,34 +1063,56 @@ async function handleIncomingMessage(payload: WhatsAppPayload): Promise<HandleIn
     }
   }
 
-  const replyMessage = await decideReply({
+  if (isNewContact) {
+    logEvent('Triage state transition', {
+      requestId,
+      phoneNumber: contact.phoneNumber,
+      messageSid: payload.messageSid,
+      status: 'AWAITING_SERVICE_SELECTION',
+      details: {
+        oldStatus: 'waiting_reply',
+        newStatus: 'AWAITING_SERVICE_SELECTION',
+      },
+    })
+  }
+
+  const decision = await decideReply({
     requestId,
     contact,
-    isNewContact,
     payload,
   })
 
-  if (replyMessage) {
-    const response = await sendWhatsAppMessage(contact.phoneNumber, replyMessage, requestId)
+  logClientAction({
+    requestId,
+    phoneNumber: contact.phoneNumber,
+    status: decision.nextStatus ?? contact.status,
+    action: decision.actionLabel,
+    messageSid: payload.messageSid,
+  })
+
+  if (decision.replyMessage) {
+    const response = await sendWhatsAppMessage(contact.phoneNumber, decision.replyMessage, requestId)
     const outboundMessageId = response.messages?.[0]?.id
 
     await persistOutboundMessage({
       conversationId: conversation.id,
-      message: replyMessage,
+      message: decision.replyMessage,
       outboundMessageId,
     })
   }
 
-  await checkAutomations({
-    conversation,
-    contact,
-    messageContent: payload.body,
-  })
+  if (decision.nextStatus !== 'TRIAGE_COMPLETED') {
+    await checkAutomations({
+      conversation,
+      contact,
+      messageContent: payload.body,
+    })
+  }
 
   return {
     requestId,
-    replyMessage,
-    replySent: replyMessage !== null,
+    replyMessage: decision.replyMessage,
+    replySent: decision.replyMessage !== null,
   }
 }
 
@@ -869,22 +1141,26 @@ function toNormalizedPayload(payload: SimpleWhatsAppWebhookPayload): WhatsAppPay
   }
 }
 
-function toNormalizedPayloadsFromMeta(value: MetaWhatsAppValuePayload): WhatsAppPayload[] {
+async function toNormalizedPayloadsFromMeta(
+  value: MetaWhatsAppValuePayload,
+): Promise<WhatsAppPayload[]> {
   const profileName = value.contacts?.[0]?.profile?.name?.trim() || null
 
-  return (value.messages ?? []).map((message) => {
-    const { body, mediaUrl, mediaType } = extractContentFromMetaMessage(message)
+  return Promise.all(
+    (value.messages ?? []).map(async (message) => {
+      const { body, mediaUrl, mediaType } = await extractContentFromMetaMessage(message)
 
-    return {
-      phoneNumber: normalizePhoneNumber(message.from),
-      body,
-      messageSid: message.id,
-      profileName,
-      messageType: normalizeMetaMessageType(message.type),
-      mediaUrl,
-      mediaType,
-    }
-  })
+      return {
+        phoneNumber: normalizePhoneNumber(message.from),
+        body,
+        messageSid: message.id,
+        profileName,
+        messageType: normalizeMetaMessageType(message.type),
+        mediaUrl,
+        mediaType,
+      }
+    }),
+  )
 }
 
 async function handleMetaWebhook(payload: MetaWhatsAppWebhookPayload): Promise<void> {
@@ -896,7 +1172,7 @@ async function handleMetaWebhook(payload: MetaWhatsAppWebhookPayload): Promise<v
         continue
       }
 
-      for (const normalizedPayload of toNormalizedPayloadsFromMeta(value)) {
+      for (const normalizedPayload of await toNormalizedPayloadsFromMeta(value)) {
         await handleIncomingMessage(normalizedPayload)
       }
 
