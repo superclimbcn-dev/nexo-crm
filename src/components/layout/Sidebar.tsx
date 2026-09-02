@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
+  CalendarDays,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -26,6 +27,7 @@ interface NavItem {
 }
 
 const baseNavItems: NavItem[] = [
+  { label: 'Agenda', href: '/calendar', icon: CalendarDays },
   { label: 'Contactos', href: '/contacts', icon: Users },
   { label: 'CRM / Pipeline', href: '/crm', icon: BarChart3 },
   { label: 'Campañas', href: '/campaigns', icon: Megaphone },

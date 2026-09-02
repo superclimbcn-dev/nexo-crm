@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import { ArrowRight, Building2, Car, ClipboardList, Droplets, Sofa, Users } from 'lucide-react'
+import { ArrowRight, Building2, CalendarDays, Car, ClipboardList, Droplets, Sofa, Users } from 'lucide-react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Badge } from '@/components/ui/badge'
 import { prisma } from '@/lib/prisma'
+import { APPOINTMENT_SERVICE_LABELS } from '@/lib/calendar/appointments'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +26,7 @@ function getPercentage(count: number, total: number): number {
 }
 
 export default async function HomePage() {
-  const [totalContacts, pendingTriage, sofasCount, impermeabilizacionCount, carsCount, communitiesCount] = await Promise.all([
+  const [totalContacts, pendingTriage, sofasCount, impermeabilizacionCount, carsCount, communitiesCount, upcomingAppointments] = await Promise.all([
     prisma.contact.count(),
     prisma.contact.count({
       where: { status: { in: ['new', 'waiting_reply', 'AWAITING_SERVICE_SELECTION'] } },
@@ -34,6 +35,12 @@ export default async function HomePage() {
     prisma.contact.count({ where: { customFields: { path: ['triageService'], equals: 'impermeabilizacion' } } }),
     prisma.contact.count({ where: { customFields: { path: ['triageService'], equals: 'carros' } } }),
     prisma.contact.count({ where: { customFields: { path: ['triageService'], equals: 'comunidades' } } }),
+    prisma.appointment.findMany({
+      where: { scheduledAt: { gte: new Date() }, status: { in: ['SCHEDULED', 'CONFIRMED'] } },
+      include: { contact: { select: { name: true, company: true, phoneNumber: true } } },
+      orderBy: { scheduledAt: 'asc' },
+      take: 5,
+    }),
   ])
 
   const qualifiedLeads = sofasCount + impermeabilizacionCount + carsCount + communitiesCount
@@ -109,6 +116,11 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
+        </section>
+
+        <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center justify-between"><div className="flex items-center gap-2"><CalendarDays className="h-5 w-5 text-primary" /><h2 className="text-lg font-semibold">Próximos servicios</h2></div><Link className="text-sm font-medium text-primary hover:underline" href="/calendar?view=upcoming">Ver agenda</Link></div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">{upcomingAppointments.length ? upcomingAppointments.map(appointment => <Link className="rounded-lg border border-border p-3 hover:border-primary/50" href={`/calendar/${appointment.id}`} key={appointment.id}><p className="text-sm font-semibold">{appointment.scheduledAt.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })} · {appointment.scheduledAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p><p className="mt-1 truncate text-sm">{appointment.contact?.company || appointment.contact?.name || appointment.contact?.phoneNumber || 'Sin cliente'}</p><p className="mt-1 text-xs text-muted-foreground">{APPOINTMENT_SERVICE_LABELS[appointment.serviceType]}</p></Link>) : <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-5">No hay servicios futuros programados.</p>}</div>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

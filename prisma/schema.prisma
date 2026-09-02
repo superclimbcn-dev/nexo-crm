@@ -51,6 +51,7 @@ model User {
   deals         Deal[]
   activities    Activity[]
   automationLogs AutomationLog[]
+  appointments   Appointment[]
 }
 
 model VerificationToken {
@@ -79,6 +80,7 @@ model Contact {
   campaignMessages CampaignMessage[]
   tags          Tag[]
   notes         Note[]
+  appointments  Appointment[]
 }
 
 model Tag {
@@ -196,6 +198,34 @@ model Deal {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   activities     Activity[]
+  appointments   Appointment[]
+}
+
+model Appointment {
+  id              String            @id @default(cuid())
+  contactId       String?
+  contact         Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  dealId          String?
+  deal            Deal?             @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  title           String
+  serviceType     AppointmentServiceType
+  scheduledAt     DateTime
+  durationMinutes Int               @default(120)
+  address         String?
+  municipality    String?
+  notes           String?           @db.Text
+  value           Decimal?          @db.Decimal(10, 2)
+  currency        String            @default("EUR")
+  status          AppointmentStatus @default(SCHEDULED)
+  assignedToId    String?
+  assignedTo      User?             @relation(fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([scheduledAt])
+  @@index([status, scheduledAt])
+  @@index([contactId])
+  @@index([dealId])
 }
 
 model Activity {
@@ -383,4 +413,19 @@ enum TriggerType {
   INACTIVITY
   SCHEDULE
   WEBHOOK
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum AppointmentServiceType {
+  SOFA_RUG_CLEANING
+  WATERPROOFING
+  CAR_UPHOLSTERY
+  COMMUNITY_CLEANING
+  OTHER
 }

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, MessageSquare, Save } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, MessageSquare, Save } from 'lucide-react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,7 +21,7 @@ export default async function DealDetailPage({ params }: { params: { id: string 
 
   return (
     <MainLayout><div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold">Editar oportunidad</h1><p className="text-muted-foreground">{deal.contact.company || deal.contact.name || deal.contact.phoneNumber}</p></div><Button asChild variant="outline"><Link href="/crm"><ArrowLeft className="mr-2 h-4 w-4" />Pipeline</Link></Button></div>
+      <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold">Editar oportunidad</h1><p className="text-muted-foreground">{deal.contact.company || deal.contact.name || deal.contact.phoneNumber}</p></div><div className="flex gap-2"><Button asChild><Link href={`/calendar/new?dealId=${deal.id}`}><CalendarPlus className="mr-2 h-4 w-4" />Programar servicio</Link></Button><Button asChild variant="outline"><Link href="/crm"><ArrowLeft className="mr-2 h-4 w-4" />Pipeline</Link></Button></div></div>
       <form action={updateDealAction} className="grid gap-4 rounded-2xl border border-border bg-card p-6 md:grid-cols-2">
         <input name="id" type="hidden" value={deal.id} />
         <Field defaultValue={deal.title} label="Título" name="title" required />
