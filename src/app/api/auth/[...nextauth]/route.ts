@@ -1,17 +1,18 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
+import type { NextAuthOptions } from 'next-auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-async function createAuthHandler() {
+async function createAuthOptions(): Promise<NextAuthOptions> {
   const [{ PrismaAdapter }, { prisma }] = await Promise.all([
     import('@auth/prisma-adapter'),
     import('@/lib/prisma'),
   ])
 
-  return NextAuth({
+  return {
     adapter: PrismaAdapter(prisma),
     secret: process.env.NEXTAUTH_SECRET,
     providers: [
@@ -81,15 +82,15 @@ async function createAuthHandler() {
     pages: {
       signIn: '/login',
     },
-  })
+  }
 }
 
 export async function GET(request: Request, context: unknown) {
-  const handler = await createAuthHandler()
+  const handler = NextAuth(await createAuthOptions())
   return handler(request, context as never)
 }
 
 export async function POST(request: Request, context: unknown) {
-  const handler = await createAuthHandler()
+  const handler = NextAuth(await createAuthOptions())
   return handler(request, context as never)
 }

@@ -100,7 +100,7 @@ export function Sidebar() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <MessageSquare className="w-5 h-5 text-white" />
           </div>
-          {!collapsed && <span className="font-semibold text-lg text-white">Nexo CRM</span>}
+          {!collapsed && <span className="font-semibold text-lg text-white">Superclim CRM</span>}
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}

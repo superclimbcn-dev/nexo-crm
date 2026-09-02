@@ -182,18 +182,18 @@ export default async function CampaignsPage({
           <div>
             <h1 className="text-2xl font-bold">Campañas</h1>
             <p className="text-muted-foreground">
-              Envía mensajes masivos a tus contactos usando campañas reales y segmentación por tags.
+              Consulta campañas registradas. El envío masivo estará disponible en una fase específica.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button>
+            <Button disabled title="Próximamente">
               <Plus className="mr-2 h-4 w-4" />
               Nueva Campaña
             </Button>
-            <Button className="bg-emerald-600 text-white hover:bg-emerald-700">
+            <Button disabled>
               <MessageSquare className="mr-2 h-4 w-4" />
-              Promoción de Impermeabilização
+              Envío desactivado
             </Button>
           </div>
         </div>

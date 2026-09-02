@@ -114,3 +114,29 @@ export async function createDealAction(formData: FormData): Promise<void> {
   revalidatePath('/crm')
   redirect('/crm')
 }
+
+export async function updateDealAction(formData: FormData): Promise<void> {
+  const id = parseRequiredString(formData.get('id'), 'oportunidad')
+  const stage = parseStage(formData.get('stage'))
+  const value = parseAmount(formData.get('value'))
+
+  await prisma.deal.update({
+    where: { id },
+    data: {
+      title: parseRequiredString(formData.get('title'), 'título'),
+      value,
+      currency: PROJECT_CURRENCY,
+      stage,
+      probability: parseProbability(formData.get('probability')),
+      expectedClose: parseOptionalDate(formData.get('expectedClose')),
+      notes: parseOptionalString(formData.get('notes')),
+      source: parseOptionalString(formData.get('source')),
+      assignedToId: parseOptionalString(formData.get('assignedToId')),
+      status: stage === 'CLOSED_WON' ? 'WON' : stage === 'CLOSED_LOST' ? 'LOST' : 'OPEN',
+      actualClose: stage === 'CLOSED_WON' || stage === 'CLOSED_LOST' ? new Date() : null,
+    },
+  })
+
+  revalidatePath('/crm')
+  revalidatePath(`/crm/${id}`)
+}

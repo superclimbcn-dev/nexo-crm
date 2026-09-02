@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { prisma } from '@/lib/prisma'
 import { formatRelativeTime } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 const inboxQuery = Prisma.validator<Prisma.ConversationFindManyArgs>()({
   orderBy: {
     lastMessageAt: 'desc',
@@ -69,6 +71,18 @@ function getContactStatusLabel(status: string): string {
       return 'Impermeabilización'
     case 'interesse_carros':
       return 'Carros'
+    case 'AWAITING_SERVICE_SELECTION':
+      return 'Esperando servicio'
+    case 'AWAITING_PHOTOS':
+      return 'Esperando fotos'
+    case 'AWAITING_COMMUNITY_MUNICIPALITY':
+      return 'Comunidades · municipio'
+    case 'AWAITING_COMMUNITY_PORTALS':
+      return 'Comunidades · portales'
+    case 'AWAITING_COMMUNITY_FREQUENCY':
+      return 'Comunidades · frecuencia'
+    case 'TRIAGE_COMPLETED':
+      return 'Triage completado'
     case 'new':
       return 'Nuevo'
     default:

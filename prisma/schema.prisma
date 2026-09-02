@@ -183,7 +183,7 @@ model Deal {
   conversation   Conversation? @relation(fields: [conversationId], references: [id])
   title          String
   value          Decimal?   @db.Decimal(10, 2)
-  currency       String     @default("BRL")
+  currency       String     @default("EUR")
   stage          DealStage  @default(NEW)
   probability    Int        @default(20)
   expectedClose  DateTime?
@@ -217,7 +217,7 @@ model Template {
   name           String
   whatsappName   String           @unique
   category       TemplateCategory
-  language       String           @default("pt_BR")
+  language       String           @default("es_ES")
   headerType     HeaderType       @default(NONE)
   headerText     String?
   headerMediaUrl String?

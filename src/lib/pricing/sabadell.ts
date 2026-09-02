@@ -4,6 +4,7 @@ export type ServiceInterest =
   | 'sofas_alfombras'
   | 'impermeabilizacion'
   | 'carros'
+  | 'comunidades'
 
 export type PricingTemplate = {
   id: string
@@ -124,6 +125,9 @@ export function getPricingEstimateForService(
     case 'carros':
       basePrice = CAR_DETAILING_AVERAGE_EUR
       break
+    case 'comunidades':
+      basePrice = 0
+      break
   }
 
   return {
@@ -161,6 +165,8 @@ export function getPricingBadgeLabel(potential: ServiceInterest | 'general'): st
       return 'Impermeabilización'
     case 'carros':
       return 'Coches'
+    case 'comunidades':
+      return 'Comunidades'
     default:
       return 'Sin clasificar'
   }

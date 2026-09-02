@@ -75,6 +75,12 @@ function getConversationStatusLabel(status: string): string {
       return 'Esperando selección de servicio'
     case 'AWAITING_PHOTOS':
       return 'Esperando fotos'
+    case 'AWAITING_COMMUNITY_MUNICIPALITY':
+      return 'Esperando municipio'
+    case 'AWAITING_COMMUNITY_PORTALS':
+      return 'Esperando número de portales'
+    case 'AWAITING_COMMUNITY_FREQUENCY':
+      return 'Esperando frecuencia del servicio'
     case 'TRIAGE_COMPLETED':
       return 'Triage completado'
     case 'interesse_sofas_alfombras':

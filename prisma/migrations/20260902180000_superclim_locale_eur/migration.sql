@@ -1,0 +1,2 @@
+ALTER TABLE "Deal" ALTER COLUMN "currency" SET DEFAULT 'EUR';
+ALTER TABLE "Template" ALTER COLUMN "language" SET DEFAULT 'es_ES';

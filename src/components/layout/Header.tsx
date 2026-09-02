@@ -1,6 +1,7 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Bell, Search, Settings, LogOut } from 'lucide-react'
+import { Search, Settings, LogOut } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 export function Header() {
@@ -29,13 +30,6 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-[10px] text-white rounded-full flex items-center justify-center">
-            3
-          </span>
-        </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-3 hover:bg-secondary rounded-lg p-2 transition-colors">
@@ -52,12 +46,17 @@ export function Header() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem>
-              <Settings className="w-4 h-4 mr-2" />
-              Configuración
+            <DropdownMenuItem asChild>
+              <Link href="/settings">
+                <Settings className="w-4 h-4 mr-2" />
+                Configuración
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-500">
+            <DropdownMenuItem
+              className="text-red-500"
+              onSelect={() => void signOut({ callbackUrl: '/login' })}
+            >
               <LogOut className="w-4 h-4 mr-2" />
               Salir
             </DropdownMenuItem>

@@ -4,8 +4,17 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('El seed de desarrollo no puede ejecutarse en producción.')
+  }
+
+  const seedPassword = process.env.DEV_SEED_PASSWORD
+  if (!seedPassword || seedPassword.length < 12) {
+    throw new Error('Define DEV_SEED_PASSWORD con al menos 12 caracteres para ejecutar el seed.')
+  }
+
   // Create admin user
-  const adminPassword = await bcrypt.hash('admin123', 10)
+  const adminPassword = await bcrypt.hash(seedPassword, 10)
   const admin = await prisma.user.upsert({
     where: { email: 'admin@nexo.com' },
     update: {},
@@ -18,7 +27,7 @@ async function main() {
   })
 
   // Create agent user
-  const agentPassword = await bcrypt.hash('agent123', 10)
+  const agentPassword = await bcrypt.hash(seedPassword, 10)
   const agent = await prisma.user.upsert({
     where: { email: 'agent@nexo.com' },
     update: {},
@@ -40,7 +49,7 @@ async function main() {
     prisma.tag.upsert({
       where: { id: '2' },
       update: {},
-      create: { id: '2', name: 'Novo', color: '#3b82f6' },
+      create: { id: '2', name: 'Nuevo', color: '#3b82f6' },
     }),
     prisma.tag.upsert({
       where: { id: '3' },
@@ -55,12 +64,13 @@ async function main() {
       where: { whatsappName: 'boas_vindas' },
       update: {},
       create: {
-        name: 'Boas-vindas',
-        whatsappName: 'boas_vindas',
+        name: 'Bienvenida',
+        whatsappName: 'bienvenida',
         category: 'UTILITY',
         headerType: 'NONE',
-        bodyText: 'Olá {{1}}! Bem-vindo à Nexo Digital. Como podemos ajudar você hoje?',
-        footerText: 'Equipe Nexo Digital',
+        bodyText: '¡Hola {{1}}! Te damos la bienvenida a Superclim Servicios. ¿Cómo podemos ayudarte?',
+        footerText: 'Superclim Servicios',
+        language: 'es_ES',
         status: 'APPROVED',
       },
     }),
@@ -68,12 +78,13 @@ async function main() {
       where: { whatsappName: 'promocao_black_friday' },
       update: {},
       create: {
-        name: 'Promoção Black Friday',
-        whatsappName: 'promocao_black_friday',
+        name: 'Información del servicio',
+        whatsappName: 'informacion_servicio',
         category: 'MARKETING',
         headerType: 'IMAGE',
-        bodyText: '🎉 Black Friday! Aproveite {{1}}% de desconto em todos os planos. Válido até {{2}}.',
-        footerText: 'Não perca!',
+        bodyText: 'Hola {{1}}. Te enviamos la información solicitada sobre {{2}}.',
+        footerText: 'Superclim Servicios',
+        language: 'es_ES',
         status: 'APPROVED',
       },
     }),
@@ -81,12 +92,13 @@ async function main() {
       where: { whatsappName: 'follow_up_pos_venda' },
       update: {},
       create: {
-        name: 'Follow-up Pós-venda',
-        whatsappName: 'follow_up_pos_venda',
+        name: 'Seguimiento del servicio',
+        whatsappName: 'seguimiento_servicio',
         category: 'UTILITY',
         headerType: 'NONE',
-        bodyText: 'Olá {{1}}! Tudo bem com o {{2}}? Precisa de algum suporte?',
-        footerText: 'Estamos aqui para ajudar!',
+        bodyText: 'Hola {{1}}. ¿Qué tal ha ido el servicio de {{2}}? Estamos a tu disposición.',
+        footerText: 'Superclim Servicios',
+        language: 'es_ES',
         status: 'APPROVED',
       },
     }),
@@ -99,20 +111,19 @@ async function main() {
       update: {},
       create: {
         id: '1',
-        name: 'Resposta Automática - Preço',
+        name: 'Respuesta automática - Información',
         triggerType: 'KEYWORD',
-        triggerConfig: { keywords: ['preço', 'valor', 'custo', 'quanto'] },
+        triggerConfig: { keywords: ['precio', 'presupuesto', 'coste'] },
         flow: {
           nodes: [
             {
               id: 'start',
               type: 'message',
-              content:
-                'Olá! Nossos planos são:\n\nStarter: R$ 99/mês\nPro: R$ 299/mês\nEnterprise: Sob consulta\n\nQual você tem interesse?',
+              content: 'Un asesor de Superclim revisará tu solicitud y te responderá con un presupuesto.',
             },
           ],
         },
-        isActive: true,
+        isActive: false,
       },
     }),
     prisma.automation.upsert({
@@ -120,7 +131,7 @@ async function main() {
       update: {},
       create: {
         id: '2',
-        name: 'Boas-vindas Novo Contato',
+        name: 'Bienvenida de nuevo contacto',
         triggerType: 'NEW_CONVERSATION',
         triggerConfig: {},
         flow: {
@@ -128,12 +139,11 @@ async function main() {
             {
               id: 'start',
               type: 'message',
-              content:
-                'Olá! Bem-vindo à Nexo Digital! 🎉\n\nSou seu assistente virtual e estou aqui para ajudar. Como posso ser útil hoje?',
+              content: '¡Hola! Te damos la bienvenida a Superclim Servicios.',
             },
           ],
         },
-        isActive: true,
+        isActive: false,
       },
     }),
   ])
@@ -144,10 +154,10 @@ async function main() {
     update: {},
     create: {
       id: '1',
-      aiEnabled: true,
+      aiEnabled: false,
       aiModel: 'gpt-4-turbo-preview',
       aiSystemPrompt:
-        'Você é um assistente de vendas da Nexo Digital. Seja cordial, profissional e objetivo. Se não souber a resposta, sugira falar com um humano.',
+        'Asistente comercial interno de Superclim Servicios. Responde siempre en español.',
       aiTemperature: 0.7,
       aiMaxTokens: 500,
     },

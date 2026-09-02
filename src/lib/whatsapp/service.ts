@@ -5,20 +5,24 @@ import {
   getPricingEstimateForService,
   SABADELL_LOCATION,
 } from '@/lib/pricing/sabadell'
+import { isSupportedMenuOption, serviceRequiresPhotos } from '@/lib/whatsapp/triage'
 
 export type TriageStatus =
   | 'new'
   | 'waiting_reply'
   | 'AWAITING_SERVICE_SELECTION'
   | 'AWAITING_PHOTOS'
+  | 'AWAITING_COMMUNITY_MUNICIPALITY'
+  | 'AWAITING_COMMUNITY_PORTALS'
+  | 'AWAITING_COMMUNITY_FREQUENCY'
   | 'TRIAGE_COMPLETED'
   | 'interesse_sofas_alfombras'
   | 'interesse_impermeabilizacion'
   | 'interesse_carros'
 
-export type MenuOption = '1' | '2' | '3'
+export type MenuOption = '1' | '2' | '3' | '4'
 
-export type ServiceInterest = 'sofas_alfombras' | 'impermeabilizacion' | 'carros'
+export type ServiceInterest = 'sofas_alfombras' | 'impermeabilizacion' | 'carros' | 'comunidades'
 
 export type SupportedMetaMessageType =
   | 'text'
@@ -172,6 +176,9 @@ type NormalizedTriageState =
   | 'waiting_reply'
   | 'AWAITING_SERVICE_SELECTION'
   | 'AWAITING_PHOTOS'
+  | 'AWAITING_COMMUNITY_MUNICIPALITY'
+  | 'AWAITING_COMMUNITY_PORTALS'
+  | 'AWAITING_COMMUNITY_FREQUENCY'
   | 'TRIAGE_COMPLETED'
 
 const WELCOME_MENU = [
@@ -180,11 +187,12 @@ const WELCOME_MENU = [
   '1. Sofás/Alfombras',
   '2. Impermeabilización',
   '3. Carros',
+  '4. Limpieza de comunidades',
 ].join('\n')
 
 const INVALID_OPTION_MESSAGE = [
   'No entendí tu elección.',
-  'Por favor, responde con 1, 2 o 3.',
+  'Por favor, responde con 1, 2, 3 o 4.',
   '',
   WELCOME_MENU,
 ].join('\n')
@@ -202,13 +210,26 @@ const SERVICE_CONFIRMATION_MESSAGES: Record<ServiceInterest, string> = {
     '¡Perfecto! Has elegido Impermeabilización. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
   carros:
     '¡Perfecto! Has elegido Carros. Ahora, por favor, envía fotos para que podamos evaluar el servicio.',
+  comunidades: '¡Perfecto! ¿En qué municipio se encuentra la comunidad?',
 }
 
 const SERVICE_BY_MENU_OPTION: Record<MenuOption, ServiceInterest> = {
   '1': 'sofas_alfombras',
   '2': 'impermeabilizacion',
   '3': 'carros',
+  '4': 'comunidades',
 }
+
+const COMMUNITY_PORTALS_QUESTION = '¿Cuántos portales tiene aproximadamente?'
+const COMMUNITY_FREQUENCY_QUESTION = [
+  '¿Qué tipo de servicio necesitan?',
+  '1. Puntual',
+  '2. Semanal',
+  '3. Varias veces por semana',
+  '4. Otro',
+].join('\n')
+const COMMUNITY_CONFIRMATION_MESSAGE =
+  'Perfecto. Un asesor de Superclim revisará la información y se pondrá en contacto contigo para preparar una visita o presupuesto.'
 
 const LEGACY_STATUS_TO_SERVICE: Record<
   Extract<
@@ -227,7 +248,7 @@ function logEvent(event: string, context: LogContext): void {
     JSON.stringify({
       event,
       requestId: context.requestId,
-      phoneNumber: context.phoneNumber,
+      phoneNumber: context.phoneNumber ? maskPhoneNumber(context.phoneNumber) : undefined,
       messageSid: context.messageSid,
       status: context.status,
       ...context.details,
@@ -243,7 +264,7 @@ function logClientAction(params: {
   messageSid: string
 }): void {
   console.log(
-    `CLIENTE ${params.phoneNumber} - ESTADO ACTUAL: ${params.status} - ACCIÓN: ${params.action}`,
+    `CLIENTE ${maskPhoneNumber(params.phoneNumber)} - ESTADO ACTUAL: ${params.status} - ACCIÓN: ${params.action}`,
   )
 
   logEvent('Triage action', {
@@ -271,6 +292,17 @@ function normalizePhoneNumber(phoneNumber: string): string {
   return phoneNumber.replace(/^whatsapp:/, '').trim()
 }
 
+export function maskPhoneNumber(phoneNumber: string): string {
+  const normalized = normalizePhoneNumber(phoneNumber)
+
+  if (normalized.length <= 4) {
+    return '*'.repeat(normalized.length)
+  }
+
+  const prefixLength = normalized.startsWith('+') ? Math.min(3, normalized.length - 4) : 0
+  return `${normalized.slice(0, prefixLength)}${'*'.repeat(normalized.length - prefixLength - 4)}${normalized.slice(-4)}`
+}
+
 function normalizeMessage(message: string): string {
   return message.replace(/\s+/g, ' ').trim()
 }
@@ -291,7 +323,7 @@ function normalizeMetaMessageType(type: string): SupportedMetaMessageType {
 }
 
 function isMenuOption(message: string): message is MenuOption {
-  return message === '1' || message === '2' || message === '3'
+  return isSupportedMenuOption(message)
 }
 
 function getMediaProxyUrl(mediaId: string): string {
@@ -326,7 +358,7 @@ function ensureWhatsAppConfig(): { apiVersion: string; phoneNumberId: string; to
   return config
 }
 
-function verifyMetaSignature(rawBody: string, signature: string | null, secret: string): boolean {
+export function verifyMetaSignature(rawBody: string, signature: string | null, secret: string): boolean {
   if (!signature || !secret.trim()) {
     return false
   }
@@ -596,7 +628,8 @@ function getParsedTriageContext(customFields: Prisma.JsonValue | null): ParsedTr
   if (
     selectedService === 'sofas_alfombras' ||
     selectedService === 'impermeabilizacion' ||
-    selectedService === 'carros'
+    selectedService === 'carros' ||
+    selectedService === 'comunidades'
   ) {
     return {
       selectedService,
@@ -612,28 +645,37 @@ function getCustomFieldsWithTriageUpdate(params: {
   currentCustomFields: Prisma.JsonValue | null
   selectedService?: ServiceInterest | null
   triageCompletedAt?: string
+  communityField?: { key: 'municipality' | 'portals' | 'frequency'; value: string }
 }): Prisma.InputJsonValue {
   const nextCustomFields: Prisma.JsonObject = isJsonObject(params.currentCustomFields)
     ? { ...params.currentCustomFields }
     : {}
 
   if (params.selectedService) {
-    const pricingEstimate = getPricingEstimateForService(
-      params.selectedService,
-      params.currentCustomFields,
-    )
-
     nextCustomFields.triageService = params.selectedService
+    nextCustomFields.serviceType =
+      params.selectedService === 'comunidades' ? 'COMMUNITY_CLEANING' : params.selectedService
     nextCustomFields.pricingLocation = SABADELL_LOCATION
-    nextCustomFields.estimatedBasePriceEur = pricingEstimate.basePrice
-    nextCustomFields.travelSurchargeEur = pricingEstimate.travelSurcharge
-    nextCustomFields.estimatedPipelineValueEur = pricingEstimate.totalPrice
     nextCustomFields.currency = 'EUR'
-    nextCustomFields.requiresTravelSurcharge = pricingEstimate.travelSurcharge > 0
 
-    if (pricingEstimate.distanceKm !== null) {
-      nextCustomFields.distanceKm = pricingEstimate.distanceKm
+    if (params.selectedService !== 'comunidades') {
+      const pricingEstimate = getPricingEstimateForService(
+        params.selectedService,
+        params.currentCustomFields,
+      )
+      nextCustomFields.estimatedBasePriceEur = pricingEstimate.basePrice
+      nextCustomFields.travelSurchargeEur = pricingEstimate.travelSurcharge
+      nextCustomFields.estimatedPipelineValueEur = pricingEstimate.totalPrice
+      nextCustomFields.requiresTravelSurcharge = pricingEstimate.travelSurcharge > 0
+
+      if (pricingEstimate.distanceKm !== null) {
+        nextCustomFields.distanceKm = pricingEstimate.distanceKm
+      }
     }
+  }
+
+  if (params.communityField) {
+    nextCustomFields[params.communityField.key] = params.communityField.value
   }
 
   if (params.triageCompletedAt) {
@@ -660,6 +702,9 @@ function resolveCurrentTriageState(contact: ContactRecord): {
       }
     case 'AWAITING_SERVICE_SELECTION':
     case 'AWAITING_PHOTOS':
+    case 'AWAITING_COMMUNITY_MUNICIPALITY':
+    case 'AWAITING_COMMUNITY_PORTALS':
+    case 'AWAITING_COMMUNITY_FREQUENCY':
     case 'TRIAGE_COMPLETED':
       return {
         currentStatus: contact.status,
@@ -765,7 +810,7 @@ async function persistIncomingMessage(params: {
     select: { id: true },
   })
 
-  if (existingMessage) {
+  if (!shouldPersistIncomingMessage(Boolean(existingMessage))) {
     return false
   }
 
@@ -788,6 +833,10 @@ async function persistIncomingMessage(params: {
   })
 
   return true
+}
+
+export function shouldPersistIncomingMessage(alreadyExists: boolean): boolean {
+  return !alreadyExists
 }
 
 async function persistOutboundMessage(params: {
@@ -819,6 +868,7 @@ async function updateContactWorkflow(params: {
   nextStatus: TriageStatus
   selectedService?: ServiceInterest | null
   triageCompletedAt?: string
+  communityField?: { key: 'municipality' | 'portals' | 'frequency'; value: string }
 }): Promise<void> {
   await prisma.contact.update({
     where: { id: params.contactId },
@@ -828,6 +878,7 @@ async function updateContactWorkflow(params: {
         currentCustomFields: params.currentCustomFields,
         selectedService: params.selectedService,
         triageCompletedAt: params.triageCompletedAt,
+        communityField: params.communityField,
       }),
     },
   })
@@ -876,20 +927,108 @@ async function decideReply(params: {
       {
         const selectedService = SERVICE_BY_MENU_OPTION[params.payload.body]
 
+        const nextStatus: TriageStatus =
+          serviceRequiresPhotos(selectedService)
+            ? 'AWAITING_PHOTOS'
+            : 'AWAITING_COMMUNITY_MUNICIPALITY'
+
         await updateContactWorkflow({
           contactId: params.contact.id,
           currentCustomFields: params.contact.customFields,
-          nextStatus: 'AWAITING_PHOTOS',
+          nextStatus,
           selectedService,
         })
 
         return {
-          nextStatus: 'AWAITING_PHOTOS',
+          nextStatus,
           replyMessage: SERVICE_CONFIRMATION_MESSAGES[selectedService],
-          actionLabel: `Servicio ${selectedService} seleccionado y solicitud de fotos enviada`,
+          actionLabel:
+            selectedService === 'comunidades'
+              ? 'Servicio comunidades seleccionado y municipio solicitado'
+              : `Servicio ${selectedService} seleccionado y solicitud de fotos enviada`,
           selectedService,
         }
       }
+    case 'AWAITING_COMMUNITY_MUNICIPALITY': {
+      const municipality = params.payload.body.trim()
+      if (params.payload.messageType !== 'text' || !municipality) {
+        return {
+          nextStatus: 'AWAITING_COMMUNITY_MUNICIPALITY',
+          replyMessage: 'Por favor, indica el municipio donde se encuentra la comunidad.',
+          actionLabel: 'Municipio de la comunidad solicitado de nuevo',
+          selectedService: 'comunidades',
+        }
+      }
+      await updateContactWorkflow({
+        contactId: params.contact.id,
+        currentCustomFields: params.contact.customFields,
+        nextStatus: 'AWAITING_COMMUNITY_PORTALS',
+        selectedService: 'comunidades',
+        communityField: { key: 'municipality', value: municipality },
+      })
+      return {
+        nextStatus: 'AWAITING_COMMUNITY_PORTALS',
+        replyMessage: COMMUNITY_PORTALS_QUESTION,
+        actionLabel: 'Municipio guardado y número de portales solicitado',
+        selectedService: 'comunidades',
+      }
+    }
+    case 'AWAITING_COMMUNITY_PORTALS': {
+      const portals = params.payload.body.trim()
+      if (params.payload.messageType !== 'text' || !portals) {
+        return {
+          nextStatus: 'AWAITING_COMMUNITY_PORTALS',
+          replyMessage: 'Por favor, indica cuántos portales tiene aproximadamente.',
+          actionLabel: 'Número de portales solicitado de nuevo',
+          selectedService: 'comunidades',
+        }
+      }
+      await updateContactWorkflow({
+        contactId: params.contact.id,
+        currentCustomFields: params.contact.customFields,
+        nextStatus: 'AWAITING_COMMUNITY_FREQUENCY',
+        selectedService: 'comunidades',
+        communityField: { key: 'portals', value: portals },
+      })
+      return {
+        nextStatus: 'AWAITING_COMMUNITY_FREQUENCY',
+        replyMessage: COMMUNITY_FREQUENCY_QUESTION,
+        actionLabel: 'Número de portales guardado y frecuencia solicitada',
+        selectedService: 'comunidades',
+      }
+    }
+    case 'AWAITING_COMMUNITY_FREQUENCY': {
+      const frequencyByOption: Record<string, string> = {
+        '1': 'Puntual',
+        '2': 'Semanal',
+        '3': 'Varias veces por semana',
+        '4': 'Otro',
+      }
+      const rawFrequency = params.payload.body.trim()
+      const frequency = frequencyByOption[rawFrequency] ?? rawFrequency
+      if (params.payload.messageType !== 'text' || !frequency) {
+        return {
+          nextStatus: 'AWAITING_COMMUNITY_FREQUENCY',
+          replyMessage: COMMUNITY_FREQUENCY_QUESTION,
+          actionLabel: 'Frecuencia solicitada de nuevo',
+          selectedService: 'comunidades',
+        }
+      }
+      await updateContactWorkflow({
+        contactId: params.contact.id,
+        currentCustomFields: params.contact.customFields,
+        nextStatus: 'TRIAGE_COMPLETED',
+        selectedService: 'comunidades',
+        communityField: { key: 'frequency', value: frequency },
+        triageCompletedAt: new Date().toISOString(),
+      })
+      return {
+        nextStatus: 'TRIAGE_COMPLETED',
+        replyMessage: COMMUNITY_CONFIRMATION_MESSAGE,
+        actionLabel: 'Datos de comunidad guardados y triage completado',
+        selectedService: 'comunidades',
+      }
+    }
     case 'AWAITING_PHOTOS':
       if (params.payload.messageType === 'image' && params.payload.mediaUrl) {
         await updateContactWorkflow({

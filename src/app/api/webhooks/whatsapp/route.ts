@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text()
     const signature = req.headers.get('x-hub-signature-256')
 
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV !== 'development') {
       const secret = process.env.WHATSAPP_WEBHOOK_SECRET || ''
 
       if (!WhatsAppService.verifyMetaSignature(rawBody, signature, secret)) {

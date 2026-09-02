@@ -67,9 +67,7 @@ function getContactDisplayName(contact: ContactListItem): string {
 }
 
 function getContactLink(contact: ContactListItem): string {
-  return contact.conversations[0]?.id
-    ? `/conversations/${contact.conversations[0].id}`
-    : `/conversations/new?contactId=${contact.id}`
+  return `/contacts/${contact.id}`
 }
 
 export default async function ContactsPage({
@@ -117,9 +115,11 @@ export default async function ContactsPage({
               <Download className="mr-2 h-4 w-4" />
               Exportar
             </Button>
-            <Button disabled>
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo Contacto
+            <Button asChild>
+              <Link href="/contacts/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo Contacto
+              </Link>
             </Button>
           </div>
         </div>

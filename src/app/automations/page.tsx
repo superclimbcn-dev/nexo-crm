@@ -301,8 +301,8 @@ export default async function AutomationsPage({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Link href="/automations/new">
-              <Button>
+            <Link aria-disabled="true" href="#">
+              <Button disabled>
                 <Plus className="mr-2 h-4 w-4" />
                 Nueva Automatización
               </Button>
@@ -415,7 +415,7 @@ export default async function AutomationsPage({
                           type="hidden"
                           value={String(!automation.isActive)}
                         />
-                        <Button size="sm" type="submit" variant="outline">
+                        <Button disabled size="sm" title="Motor de automatizaciones en preparación" type="submit" variant="outline">
                           {automation.isActive ? (
                             <>
                               <Pause className="mr-2 h-4 w-4" />

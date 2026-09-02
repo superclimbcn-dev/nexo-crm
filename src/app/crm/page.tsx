@@ -52,7 +52,7 @@ const pipelineQuery = Prisma.validator<Prisma.DealFindManyArgs>()({
 })
 
 type PipelineDeal = Prisma.DealGetPayload<typeof pipelineQuery>
-type ServicePotential = 'sofas_alfombras' | 'impermeabilizacion' | 'carros' | 'general'
+type ServicePotential = 'sofas_alfombras' | 'impermeabilizacion' | 'carros' | 'comunidades' | 'general'
 
 type PipelineStageConfig = {
   id: DealStage
@@ -114,7 +114,8 @@ function getServicePotential(deal: PipelineDeal): ServicePotential {
     if (
       triageService === 'sofas_alfombras' ||
       triageService === 'impermeabilizacion' ||
-      triageService === 'carros'
+      triageService === 'carros' ||
+      triageService === 'comunidades'
     ) {
       return triageService
     }
@@ -184,9 +185,7 @@ function getStageTotal(deals: PipelineDeal[], stage: DealStage): number {
 }
 
 function getDealLink(deal: PipelineDeal): string {
-  return deal.conversation?.id
-    ? `/conversations/${deal.conversation.id}`
-    : `/conversations/new?contactId=${deal.contactId}`
+  return `/crm/${deal.id}`
 }
 
 function getProbabilityTone(probability: number): string {
@@ -319,7 +318,7 @@ export default async function CRMPage({
                             <div>
                               <h3 className="text-sm font-medium">{deal.title}</h3>
                               <p className="mt-1 text-xs text-muted-foreground">
-                                Haz clic para abrir la conversación o el cliente relacionado.
+                                Haz clic para editar y actualizar la etapa.
                               </p>
                             </div>
                             <ArrowRight className="mt-0.5 h-4 w-4 text-muted-foreground" />

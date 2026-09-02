@@ -8,6 +8,8 @@ import { PROJECT_CURRENCY } from '@/lib/pricing/sabadell'
 import { prisma } from '@/lib/prisma'
 import { createDealAction } from '../actions'
 
+export const dynamic = 'force-dynamic'
+
 const contactsQuery = Prisma.validator<Prisma.ContactFindManyArgs>()({
   select: {
     id: true,

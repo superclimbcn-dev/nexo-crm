@@ -1,39 +1,19 @@
 import Link from 'next/link'
-import { ArrowRight, Car, ClipboardList, Droplets, Sofa, Users } from 'lucide-react'
+import { ArrowRight, Building2, Car, ClipboardList, Droplets, Sofa, Users } from 'lucide-react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Badge } from '@/components/ui/badge'
 import { prisma } from '@/lib/prisma'
 
-type ConversionStatus =
-  | 'waiting_reply'
-  | 'interesse_sofas_alfombras'
-  | 'interesse_impermeabilizacion'
-  | 'interesse_carros'
-
-interface StatusAggregate {
-  status: ConversionStatus
-  count: number
-}
+export const dynamic = 'force-dynamic'
 
 interface ServiceMetric {
-  status: Exclude<ConversionStatus, 'waiting_reply'>
+  status: string
   title: string
   description: string
   count: number
   percentage: number
   icon: typeof Sofa
   accentClass: string
-}
-
-const TRACKED_STATUSES: ConversionStatus[] = [
-  'waiting_reply',
-  'interesse_sofas_alfombras',
-  'interesse_impermeabilizacion',
-  'interesse_carros',
-]
-
-function getCountByStatus(aggregates: StatusAggregate[], status: ConversionStatus): number {
-  return aggregates.find((aggregate) => aggregate.status === status)?.count ?? 0
 }
 
 function getPercentage(count: number, total: number): number {
@@ -45,35 +25,18 @@ function getPercentage(count: number, total: number): number {
 }
 
 export default async function HomePage() {
-  const [statusGroups, totalContacts] = await Promise.all([
-    prisma.contact.groupBy({
-      by: ['status'],
-      where: {
-        status: {
-          in: TRACKED_STATUSES,
-        },
-      },
-      _count: {
-        status: true,
-      },
-    }),
+  const [totalContacts, pendingTriage, sofasCount, impermeabilizacionCount, carsCount, communitiesCount] = await Promise.all([
     prisma.contact.count(),
+    prisma.contact.count({
+      where: { status: { in: ['new', 'waiting_reply', 'AWAITING_SERVICE_SELECTION'] } },
+    }),
+    prisma.contact.count({ where: { customFields: { path: ['triageService'], equals: 'sofas_alfombras' } } }),
+    prisma.contact.count({ where: { customFields: { path: ['triageService'], equals: 'impermeabilizacion' } } }),
+    prisma.contact.count({ where: { customFields: { path: ['triageService'], equals: 'carros' } } }),
+    prisma.contact.count({ where: { customFields: { path: ['triageService'], equals: 'comunidades' } } }),
   ])
 
-  const aggregates: StatusAggregate[] = statusGroups
-    .filter((group): group is typeof group & { status: ConversionStatus } =>
-      TRACKED_STATUSES.includes(group.status as ConversionStatus),
-    )
-    .map((group) => ({
-      status: group.status,
-      count: group._count.status,
-    }))
-
-  const pendingTriage = getCountByStatus(aggregates, 'waiting_reply')
-  const sofasCount = getCountByStatus(aggregates, 'interesse_sofas_alfombras')
-  const impermeabilizacionCount = getCountByStatus(aggregates, 'interesse_impermeabilizacion')
-  const carsCount = getCountByStatus(aggregates, 'interesse_carros')
-  const qualifiedLeads = sofasCount + impermeabilizacionCount + carsCount
+  const qualifiedLeads = sofasCount + impermeabilizacionCount + carsCount + communitiesCount
 
   const serviceMetrics: ServiceMetric[] = [
     {
@@ -103,6 +66,15 @@ export default async function HomePage() {
       icon: Car,
       accentClass: 'bg-emerald-500',
     },
+    {
+      status: 'comunidades',
+      title: 'Comunidades',
+      description: 'Comunidades interesadas en limpieza puntual o periódica.',
+      count: communitiesCount,
+      percentage: getPercentage(communitiesCount, qualifiedLeads),
+      icon: Building2,
+      accentClass: 'bg-violet-500',
+    },
   ]
 
   return (
@@ -117,7 +89,7 @@ export default async function HomePage() {
               <h1 className="text-3xl font-bold tracking-tight">Panel de Conversión Superclim</h1>
               <p className="max-w-2xl text-sm text-muted-foreground">
                 Visualiza cuántos leads siguen pendientes de triage y cómo se distribuyen entre
-                Sofás, Impermeabilización y Carros.
+                Sofás, Impermeabilización, Carros y Comunidades.
               </p>
             </div>
 
@@ -161,7 +133,7 @@ export default async function HomePage() {
               </div>
               <Badge variant="secondary">{getPercentage(pendingTriage, totalContacts)}%</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">Pending Triage</p>
+            <p className="text-sm text-muted-foreground">Triage pendiente</p>
             <p className="mt-2 text-3xl font-bold">{pendingTriage}</p>
             <p className="mt-2 text-xs text-muted-foreground">
               Leads que aún no eligieron un servicio en WhatsApp.
@@ -187,7 +159,7 @@ export default async function HomePage() {
               <div className="rounded-full bg-sky-500/10 p-3 text-sky-500">
                 <Droplets className="h-5 w-5" />
               </div>
-              <Badge variant="secondary">3 servicios</Badge>
+              <Badge variant="secondary">4 servicios</Badge>
             </div>
             <p className="text-sm text-muted-foreground">Distribución Comercial</p>
             <p className="mt-2 text-3xl font-bold">{serviceMetrics.filter((item) => item.count > 0).length}</p>
@@ -197,7 +169,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-3">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {serviceMetrics.map((metric) => {
             const Icon = metric.icon
 

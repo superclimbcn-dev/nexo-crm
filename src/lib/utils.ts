@@ -15,7 +15,7 @@ export function formatPhoneNumber(phone: string): string {
   return cleaned
 }
 
-export function formatCurrency(value: number, currency = 'BRL'): string {
+export function formatCurrency(value: number, currency = 'EUR'): string {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency,
