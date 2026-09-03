@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { WhatsAppService } from '@/lib/whatsapp/service'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 function createJsonResponse(body: Record<string, unknown>, status = 200): NextResponse {
   return NextResponse.json(body, { status })
 }
 
 export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV !== 'development') {
+    return new NextResponse(null, { status: 404 })
+  }
+
   try {
     const rawPayload: unknown = await req.json()
 

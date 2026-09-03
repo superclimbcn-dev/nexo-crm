@@ -330,12 +330,25 @@ function getMediaProxyUrl(mediaId: string): string {
   return `/api/media/${mediaId}`
 }
 
+export function resolveWhatsAppApiVersion(
+  configuredVersion = process.env.WHATSAPP_API_VERSION,
+  nodeEnv = process.env.NODE_ENV,
+): string | null {
+  const normalizedVersion = configuredVersion?.trim()
+
+  if (normalizedVersion) {
+    return normalizedVersion
+  }
+
+  return nodeEnv === 'development' ? 'v26.0' : null
+}
+
 function getWhatsAppConfig(): { apiVersion: string; phoneNumberId: string; token: string } | null {
-  const apiVersion = process.env.WHATSAPP_API_VERSION ?? 'v18.0'
+  const apiVersion = resolveWhatsAppApiVersion()
   const phoneNumberId = process.env.PHONE_NUMBER_ID ?? process.env.WHATSAPP_PHONE_NUMBER_ID ?? ''
   const token = process.env.WHATSAPP_TOKEN ?? process.env.WHATSAPP_ACCESS_TOKEN ?? ''
 
-  if (!phoneNumberId || !token) {
+  if (!apiVersion || !phoneNumberId || !token) {
     return null
   }
 
@@ -351,7 +364,7 @@ function ensureWhatsAppConfig(): { apiVersion: string; phoneNumberId: string; to
 
   if (!config) {
     throw new Error(
-      'Las credenciales de WhatsApp no están configuradas. Define WHATSAPP_TOKEN y PHONE_NUMBER_ID.',
+      'La integración de WhatsApp no está configurada. Define WHATSAPP_API_VERSION, WHATSAPP_TOKEN y PHONE_NUMBER_ID.',
     )
   }
 

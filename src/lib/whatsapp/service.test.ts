@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import test from 'node:test'
-import { shouldPersistIncomingMessage, verifyMetaSignature } from './service'
+import {
+  resolveWhatsAppApiVersion,
+  shouldPersistIncomingMessage,
+  verifyMetaSignature,
+} from './service'
 
 test('valida la firma SHA-256 del webhook y rechaza firmas incorrectas', () => {
   const body = JSON.stringify({ entry: [] })
@@ -15,4 +19,11 @@ test('valida la firma SHA-256 del webhook y rechaza firmas incorrectas', () => {
 test('no persiste dos veces el mismo identificador de WhatsApp', () => {
   assert.equal(shouldPersistIncomingMessage(false), true)
   assert.equal(shouldPersistIncomingMessage(true), false)
+})
+
+test('exige versión explícita fuera de desarrollo y usa v26.0 solo localmente', () => {
+  assert.equal(resolveWhatsAppApiVersion(undefined, 'production'), null)
+  assert.equal(resolveWhatsAppApiVersion(undefined, 'test'), null)
+  assert.equal(resolveWhatsAppApiVersion(undefined, 'development'), 'v26.0')
+  assert.equal(resolveWhatsAppApiVersion(' v26.0 ', 'production'), 'v26.0')
 })
